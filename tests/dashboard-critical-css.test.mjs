@@ -12,6 +12,15 @@ function src(relPath) {
   return readFileSync(resolve(repoRoot, relPath), 'utf8');
 }
 
+function builtSrc(relPath) {
+  const absPath = resolve(repoRoot, relPath);
+  assert.ok(
+    existsSync(absPath),
+    `${relPath} must exist before running built-output CSS assertions. Run VITE_VARIANT=full vite build first.`,
+  );
+  return readFileSync(absPath, 'utf8');
+}
+
 function toRepoPath(absPath) {
   return relative(repoRoot, absPath).replaceAll('\\', '/');
 }
@@ -148,6 +157,24 @@ function stylesheetHrefs(html) {
   return hrefs;
 }
 
+function stripNoscript(html) {
+  return html.replace(/<noscript\b[\s\S]*?<\/noscript>/gi, '');
+}
+
+function renderBlockingStylesheetHrefs(html) {
+  const hrefs = [];
+  for (const match of stripNoscript(html).matchAll(/<link\b[^>]*>/gi)) {
+    const attrs = linkAttributes(match[0]);
+    const rels = (attrs.get('rel') ?? '').toLowerCase().split(/\s+/);
+    const href = attrs.get('href');
+    const rawMedia = attrs.get('media');
+    const media = rawMedia === undefined ? 'all' : rawMedia.trim().toLowerCase();
+    if (!href?.endsWith('.css') || !rels.includes('stylesheet')) continue;
+    if (media === 'all' || media === 'screen') hrefs.push(href);
+  }
+  return hrefs;
+}
+
 describe('dashboard critical CSS graph', () => {
   it('extracts stylesheet links regardless of link attribute order', () => {
     assert.deepEqual(
@@ -157,6 +184,19 @@ describe('dashboard critical CSS graph', () => {
         <link href="/assets/ignored.css" rel="preload">
       `),
       ['/assets/main.css', '/assets/settings.css'],
+    );
+  });
+
+  it('identifies only screen-blocking stylesheet links outside noscript fallbacks', () => {
+    assert.deepEqual(
+      renderBlockingStylesheetHrefs(`
+        <link rel="stylesheet" href="/assets/main.css">
+        <link rel="stylesheet" media="screen" href="/assets/screen.css">
+        <link rel="stylesheet" media="print" href="/assets/deferred.css">
+        <link rel="stylesheet" media="" href="/assets/empty-media.css">
+        <noscript><link rel="stylesheet" href="/assets/nojs.css"></noscript>
+      `),
+      ['/assets/main.css', '/assets/screen.css'],
     );
   });
 
@@ -250,8 +290,8 @@ describe('dashboard critical CSS graph', () => {
     );
   });
 
-  it('does not link or merge the settings-only stylesheet into built dashboard.html', { skip: !existsSync(resolve(repoRoot, 'dist/dashboard.html')) }, () => {
-    const dashboardHtml = src('dist/dashboard.html');
+  it('does not link or merge the settings-only stylesheet into built dashboard.html', () => {
+    const dashboardHtml = builtSrc('dist/dashboard.html');
     const hrefs = stylesheetHrefs(dashboardHtml);
     const settingsStylesheets = hrefs.filter((href) =>
       /\/assets\/settings(?:-(?:persistence|window))?-[A-Za-z0-9_-]+\.css$/.test(href)
@@ -271,7 +311,7 @@ describe('dashboard critical CSS graph', () => {
       '.settings-titlebar',
     ];
     const dashboardCss = hrefs
-      .map((href) => src(`dist/${href.replace(/^\//, '')}`))
+      .map((href) => builtSrc(`dist/${href.replace(/^\//, '')}`))
       .join('\n');
     for (const selector of standaloneSettingsSelectors) {
       assert.equal(
@@ -287,18 +327,55 @@ describe('dashboard critical CSS graph', () => {
     );
 
     if (existsSync(resolve(repoRoot, 'dist/settings.html'))) {
-      const settingsHrefs = stylesheetHrefs(src('dist/settings.html'));
+      const settingsHrefs = stylesheetHrefs(builtSrc('dist/settings.html'));
       assert.ok(
         settingsHrefs.some((href) => /\/assets\/settings(?:-(?:persistence|window))?-[A-Za-z0-9_-]+\.css$/.test(href)),
         'Built settings.html should still link the settings-only stylesheet for the standalone settings window.',
       );
       const settingsCss = settingsHrefs
-        .map((href) => src(`dist/${href.replace(/^\//, '')}`))
+        .map((href) => builtSrc(`dist/${href.replace(/^\//, '')}`))
         .join('\n');
       assert.equal(
         standaloneSettingsSelectors.every((selector) => settingsCss.includes(selector)),
         true,
         'Built settings.html stylesheets should still include standalone settings selectors.',
+      );
+    }
+  });
+
+  it('keeps large dashboard CSS off the render-blocking stylesheet path', () => {
+    const dashboardHtml = builtSrc('dist/dashboard.html');
+    const blockingHrefs = renderBlockingStylesheetHrefs(dashboardHtml);
+
+    assert.deepEqual(
+      blockingHrefs,
+      [],
+      `Built dashboard.html must not render-block on app CSS; found ${blockingHrefs.join(', ')}`,
+    );
+
+    const deferredHrefs = [];
+    for (const match of stripNoscript(dashboardHtml).matchAll(/<link\b[^>]*>/gi)) {
+      const attrs = linkAttributes(match[0]);
+      if (
+        attrs.get('data-wm-deferred-style') === 'dashboard' &&
+        attrs.get('media') === 'print' &&
+        attrs.get('href')?.endsWith('.css')
+      ) {
+        deferredHrefs.push(attrs.get('href'));
+      }
+    }
+    assert.ok(deferredHrefs.length > 0, 'Built dashboard.html should still request app CSS on a deferred stylesheet path.');
+
+    const noscriptLinkTags = [...dashboardHtml.matchAll(/<noscript>\s*(<link\b[^>]*>)\s*<\/noscript>/gi)].map((m) => m[1]);
+    for (const href of deferredHrefs) {
+      const hasFallback = noscriptLinkTags.some((tag) => {
+        const attrs = linkAttributes(tag);
+        const rels = (attrs.get('rel') ?? '').toLowerCase().split(/\s+/);
+        return attrs.get('href') === href && rels.includes('stylesheet');
+      });
+      assert.ok(
+        hasFallback,
+        `Deferred dashboard stylesheet ${href} must keep a no-JS stylesheet fallback (rel=stylesheet, any attribute order).`,
       );
     }
   });

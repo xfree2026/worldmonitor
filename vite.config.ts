@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import type { OutputBundle } from 'rollup';
 import { resolve, dirname, extname } from 'path';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { brotliCompress } from 'zlib';
@@ -287,9 +288,47 @@ function dashboardHtmlOutputPlugin(): Plugin {
       const [bundleKey, dashboardHtml] = dashboardEntry;
       delete bundle[bundleKey];
       dashboardHtml.fileName = 'dashboard.html';
+      if (typeof dashboardHtml.source === 'string') {
+        dashboardHtml.source = deferDashboardStylesheetLinks(dashboardHtml.source, bundle);
+      }
       bundle['dashboard.html'] = dashboardHtml;
     },
   };
+}
+
+function shouldDeferDashboardStylesheet(tag: string, bundle: OutputBundle): boolean {
+  const href = tag.match(/\bhref=["']([^"']+\.css)["']/i)?.[1];
+  if (!href) return false;
+
+  const bundleKey = href.replace(/^\//, '');
+  const asset = bundle[bundleKey];
+  if (!asset || asset.type !== 'asset') return false;
+
+  const sourceLength = typeof asset.source === 'string'
+    ? Buffer.byteLength(asset.source)
+    : asset.source.byteLength;
+  return sourceLength >= 100 * 1024;
+}
+
+// Rewrite large render-blocking dashboard <link rel=stylesheet> tags into a
+// deferred form (media="print" + data-wm-deferred-style="dashboard") plus a
+// <noscript> copy of the original blocking link, so the ~492KB app CSS no
+// longer blocks first paint. src/main.ts activateDeferredDashboardStyles()
+// flips media -> "all" at startup; the attribute name + values written here MUST
+// stay in lockstep with that runtime selector. Only assets >=100KB are deferred
+// (shouldDeferDashboardStylesheet) so small stylesheets stay blocking; links
+// that already set media= (an intentionally print/screen-scoped sheet) or are
+// already deferred are skipped. NOTE: during the defer window only the UNLAYERED
+// inline critical CSS in index.html applies (the bundle is @layer base), so any
+// future *unconditional* inline rule will beat the bundle (see PR #4346) — keep
+// inline rules scoped to a transient/closed state.
+function deferDashboardStylesheetLinks(html: string, bundle: OutputBundle): string {
+  return html.replace(/<link\b(?=[^>]*\brel=["']stylesheet["'])(?=[^>]*\bhref=["'][^"']+\.css["'])[^>]*>/gi, (tag) => {
+    if (/\bdata-wm-deferred-style=/.test(tag) || /\bmedia=/.test(tag)) return tag;
+    if (!shouldDeferDashboardStylesheet(tag, bundle)) return tag;
+    const deferredTag = tag.replace(/\s*\/?>$/, ' media="print" data-wm-deferred-style="dashboard">');
+    return `${deferredTag}\n    <noscript>${tag}</noscript>`;
+  });
 }
 
 function polymarketPlugin(): Plugin {
