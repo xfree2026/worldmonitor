@@ -37,10 +37,6 @@
 
 import type { FunctionReference } from 'convex/server';
 import { toIso2 } from '../utils/country-codes';
-import {
-  getEntitlementState as _getEntitlementState,
-  hasTier as _hasTier,
-} from './entitlements';
 import { getCurrentClerkUser as _getCurrentClerkUser } from './clerk';
 import { subscribeAuthState as _subscribeAuthState } from './auth-state';
 import {
@@ -171,9 +167,6 @@ interface ConvexApiLike {
 
 let _clerkUserGetter: ClerkUserGetter = () =>
   _getCurrentClerkUser() as { id: string } | null;
-let _entitlementStateGetter: EntitlementStateGetter = () =>
-  _getEntitlementState();
-let _hasTierFn: HasTierFn = (n) => _hasTier(n);
 let _featureFlagOverride: boolean | null = null;
 let _convexClientGetter: () => Promise<ConvexClientLike | null> = async () =>
   (await _getConvexClient()) as ConvexClientLike | null;
@@ -219,13 +212,6 @@ export function _setDepsForTests(deps: {
     _clerkUserGetter =
       deps.getCurrentClerkUser ??
       (() => _getCurrentClerkUser() as { id: string } | null);
-  }
-  if (deps.getEntitlementState !== undefined) {
-    _entitlementStateGetter =
-      deps.getEntitlementState ?? (() => _getEntitlementState());
-  }
-  if (deps.hasTier !== undefined) {
-    _hasTierFn = deps.hasTier ?? ((n) => _hasTier(n));
   }
   if (deps.featureFlagEnabled !== undefined) {
     _featureFlagOverride = deps.featureFlagEnabled;

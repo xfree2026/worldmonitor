@@ -920,15 +920,6 @@ export class Panel {
     }
   }
 
-  // Capture this.content's current child nodes so unlockPanel can put them
-  // back. Only snapshots on the FIRST transition into a lock state — a
-  // re-entrant showLocked / showGatedCta must not overwrite the cache with
-  // the locked-state CTA. The cache is cleared by unlockPanel on restore.
-  private _snapshotContentForRestore(): void {
-    if (this._savedContent !== null) return;
-    this._savedContent = Array.from(this.content.childNodes);
-  }
-
   public showRetrying(message?: string, countdownSeconds?: number): void {
     if (this._locked) return;
     this.clearRetryCountdown();

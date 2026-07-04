@@ -198,17 +198,6 @@ export class ResilienceWidget {
     return this.renderScoreCard(LOCKED_PREVIEW, true);
   }
 
-  private async showAuthUnavailable(): Promise<void> {
-    const message = 'Sign-in is temporarily unavailable. Please try again.';
-    try {
-      const { showCheckoutErrorToast } = await import('@/services/checkout-error-toast');
-      showCheckoutErrorToast(message);
-      return;
-    } catch {
-      window.alert(message);
-    }
-  }
-
   private renderError(message: string): HTMLElement {
     return h(
       'div',
@@ -443,25 +432,5 @@ export class ResilienceWidget {
 
   private makeEmpty(text: string): HTMLElement {
     return h('div', { className: 'cdp-empty' }, text);
-  }
-
-  private async openUpgradeFlow(): Promise<void> {
-    const [{ DEFAULT_UPGRADE_PRODUCT }, { isDesktopRuntime }] = await Promise.all([
-      import('@/config/products'),
-      import('@/services/runtime'),
-    ]);
-
-    if (isDesktopRuntime()) {
-      const { invokeTauri } = await import('@/services/tauri-bridge');
-      await invokeTauri<void>('open_url', { url: 'https://worldmonitor.app/pro' })
-        .catch(() => { window.open('https://worldmonitor.app/pro', '_blank'); });
-      return;
-    }
-
-    await import('@/services/checkout')
-      .then((module) => module.startCheckout(DEFAULT_UPGRADE_PRODUCT))
-      .catch(() => {
-        window.open('https://worldmonitor.app/pro', '_blank');
-      });
   }
 }
