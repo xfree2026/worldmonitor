@@ -193,38 +193,9 @@ export class ResilienceWidget {
     return this.renderScoreCard(this.currentData);
   }
 
-  private renderLocked(gateReason: PanelGateReason): HTMLElement {
-    const description = gateReason === PanelGateReason.ANONYMOUS
-      ? 'Sign in to unlock premium resilience scores.'
-      : 'Upgrade to Pro to unlock resilience scores.';
-    const cta = gateReason === PanelGateReason.ANONYMOUS ? 'Sign In' : 'Upgrade to Pro';
-
-    const preview = this.renderScoreCard(LOCKED_PREVIEW, true);
-    preview.classList.add('resilience-widget__preview');
-
-    const button = h('button', {
-      type: 'button',
-      className: 'panel-locked-cta resilience-widget__cta',
-      onclick: () => {
-        if (gateReason === PanelGateReason.ANONYMOUS) {
-          void import('@/services/clerk')
-            .then((module) => module.openSignIn())
-            .catch(() => this.showAuthUnavailable());
-          return;
-        }
-        void this.openUpgradeFlow().catch(() => {
-          window.open('https://worldmonitor.app/pro', '_blank');
-        });
-      },
-    }, cta) as HTMLButtonElement;
-
-    return h(
-      'div',
-      { className: 'cdp-card-body resilience-widget__locked' },
-      preview,
-      h('div', { className: 'panel-locked-desc resilience-widget__gate-desc' }, description),
-      button,
-    );
+  private renderLocked(_gateReason: PanelGateReason): HTMLElement {
+    // 全功能开放：直接展示预览数据，不渲染锁定 UI
+    return this.renderScoreCard(LOCKED_PREVIEW, true);
   }
 
   private async showAuthUnavailable(): Promise<void> {

@@ -444,8 +444,8 @@ export class UnifiedSettings {
           <button class="${tabClass('panels')}" data-tab="panels" role="tab" aria-selected="${this.activeTab === 'panels'}" id="us-tab-panels" aria-controls="us-tab-panel-panels">${t('header.tabPanels')}</button>
           <button class="${tabClass('sources')}" data-tab="sources" role="tab" aria-selected="${this.activeTab === 'sources'}" id="us-tab-sources" aria-controls="us-tab-panel-sources">${t('header.tabSources')}</button>
           ${showNotificationsTab ? `<button class="${tabClass('notifications')}" data-tab="notifications" role="tab" aria-selected="${this.activeTab === 'notifications'}" id="us-tab-notifications" aria-controls="us-tab-panel-notifications">${t('header.tabNotifications')}</button>` : ''}
-          <button class="${tabClass('api-keys')}" data-tab="api-keys" role="tab" aria-selected="${this.activeTab === 'api-keys'}" id="us-tab-api-keys" aria-controls="us-tab-panel-api-keys">API Keys <span class="panel-pro-badge">PRO</span></button>
-          ${hasFeature('mcpAccess') ? `<button class="${tabClass('mcp-clients')}" data-tab="mcp-clients" role="tab" aria-selected="${this.activeTab === 'mcp-clients'}" id="us-tab-mcp-clients" aria-controls="us-tab-panel-mcp-clients">MCP Clients <span class="panel-pro-badge">PRO</span></button>` : ''}
+          <button class="${tabClass('api-keys')}" data-tab="api-keys" role="tab" aria-selected="${this.activeTab === 'api-keys'}" id="us-tab-api-keys" aria-controls="us-tab-panel-api-keys">API Keys</button>
+          <button class="${tabClass('mcp-clients')}" data-tab="mcp-clients" role="tab" aria-selected="${this.activeTab === 'mcp-clients'}" id="us-tab-mcp-clients" aria-controls="us-tab-panel-mcp-clients">MCP Clients</button>
         </div>
         <div class="unified-settings-tab-panel${this.activeTab === 'settings' ? ' active' : ''}" data-panel-id="settings" id="us-tab-panel-settings" role="tabpanel" aria-labelledby="us-tab-settings">
           ${prefs.html}
@@ -982,22 +982,11 @@ export class UnifiedSettings {
     const authState = getAuthState();
 
     if (!authState.user) {
-      const lockIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>`;
       return `
-        <div class="panel-locked-state">
-          <div class="panel-locked-icon">${lockIcon}</div>
-          <div class="panel-locked-desc">Sign in to unlock API Keys</div>
-          <button class="panel-locked-cta api-keys-gate-btn">Sign In</button>
-        </div>`;
-    }
-
-    if (!hasFeature('apiAccess')) {
-      const upgradeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>`;
-      return `
-        <div class="panel-locked-state">
-          <div class="panel-locked-icon">${upgradeIcon}</div>
-          <div class="panel-locked-desc">Create and manage API keys to access WorldMonitor data programmatically.</div>
-          <button class="panel-locked-cta api-keys-gate-btn">Upgrade to API Starter</button>
+        <div class="api-keys-section">
+          <div class="api-keys-header">
+            <p class="api-keys-desc">API Keys 用于通过编程方式访问 WorldMonitor 数据。此功能需要登录官方账号才能创建和管理密钥。</p>
+          </div>
         </div>`;
     }
 
@@ -1170,23 +1159,11 @@ export class UnifiedSettings {
     const authState = getAuthState();
 
     if (!authState.user) {
-      const lockIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>`;
       return `
-        <div class="panel-locked-state">
-          <div class="panel-locked-icon">${lockIcon}</div>
-          <div class="panel-locked-desc">Sign in to manage connected MCP clients</div>
-        </div>`;
-    }
-
-    if (!hasFeature('mcpAccess')) {
-      // Defensive — if the user lost mcpAccess (subscription lapsed) but the
-      // tab was still rendered, show an upgrade CTA. Normal flow hides the
-      // tab entirely.
-      const upgradeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>`;
-      return `
-        <div class="panel-locked-state">
-          <div class="panel-locked-icon">${upgradeIcon}</div>
-          <div class="panel-locked-desc">Connect Claude Desktop and other AI clients to your WorldMonitor account.</div>
+        <div class="mcp-clients-section">
+          <div class="mcp-clients-header">
+            <p class="mcp-clients-desc">MCP Clients 用于连接 Claude Desktop、Cursor 等 AI 客户端到 WorldMonitor 账号。此功能需要登录官方账号才能管理。</p>
+          </div>
         </div>`;
     }
 

@@ -342,9 +342,9 @@ export class LatestBriefPanel extends Panel {
     this.content.appendChild(
       h('div', { className: 'latest-brief-card latest-brief-card--composing' },
         logo,
-        h('div', { className: 'latest-brief-empty-title' }, 'Sign in to view your brief.'),
+        h('div', { className: 'latest-brief-empty-title' }, '简报暂不可用'),
         h('div', { className: 'latest-brief-empty-body' },
-          'Your personalised brief is tied to your WorldMonitor account. Sign in to see today\u2019s issue.',
+          '该功能依赖官方服务端账号，当前部署无法获取每日简报。',
         ),
       ),
     );
@@ -362,9 +362,9 @@ export class LatestBriefPanel extends Panel {
     this.content.appendChild(
       h('div', { className: 'latest-brief-card latest-brief-card--composing' },
         logo,
-        h('div', { className: 'latest-brief-empty-title' }, 'Pro required.'),
+        h('div', { className: 'latest-brief-empty-title' }, '简报暂不可用'),
         h('div', { className: 'latest-brief-empty-body' },
-          'The WorldMonitor Brief is included with the Pro plan. Upgrade to unlock today\u2019s issue.',
+          '该功能依赖官方服务端账号，当前部署无法获取每日简报。',
         ),
       ),
     );

@@ -503,7 +503,9 @@ export class ChatAnalystPanel extends Panel {
       });
 
       if (!res.ok) {
-        const err = res.status === 403 ? 'Pro subscription required.' : `Error ${res.status}`;
+        const err = res.status === 403 || res.status === 401
+          ? '该功能需要登录官方账号才能使用。'
+          : `Error ${res.status}`;
         this.finalizeStreamingBubble(streamingBody, `⚠ ${err}`, false);
         return;
       }
