@@ -1718,6 +1718,8 @@
       "regionMiddleEast": "Naher Osten",
       "regionAfrica": "Afrika",
       "regionOceania": "Ozeanien",
+
+      "regionChina": "China",
       "invalidHandle": "Geben Sie einen gültigen YouTube-Handle ein (z. B. @KanalName)",
       "verifying": "Wird überprüft…",
       "noResults": "Keine Kanäle gefunden für \"{{term}}\"",

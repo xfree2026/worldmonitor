@@ -1996,6 +1996,8 @@
       "regionMiddleEast": "मध्य पूर्व",
       "regionAfrica": "अफ्रीका",
       "regionOceania": "ओशिनिया",
+
+      "regionChina": "चीन",
       "invalidHandle": "सही YouTube हैंडल दर्ज करें (जैसे @ChannelName)",
       "verifying": "सत्यापित कर रहे हैं…",
       "hlsUrl": "HLS स्ट्रीम URL (वैकल्पिक)",

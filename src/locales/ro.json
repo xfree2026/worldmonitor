@@ -1773,6 +1773,8 @@
       "regionMiddleEast": "Orientul Mijlociu",
       "regionAfrica": "Africa",
       "regionOceania": "Oceania",
+
+      "regionChina": "China",
       "invalidHandle": "Introduceți un handle YouTube valid (de exemplu, @ChannelName)",
       "verifying": "Se verifică...",
       "hlsUrl": "URL flux HLS (opțional)",

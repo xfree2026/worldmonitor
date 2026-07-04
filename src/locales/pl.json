@@ -1654,6 +1654,8 @@
       "regionMiddleEast": "Bliski Wschód",
       "regionAfrica": "Afryka",
       "regionOceania": "Oceania",
+
+      "regionChina": "Chiny",
       "botCheck": "YouTube wymaga zalogowania, aby odtworzyć {{name}}",
       "invalidHandle": "Wprowadź prawidłowy identyfikator YouTube (np. @NazwaKanału)",
       "signInToYouTube": "Zaloguj się do YouTube",

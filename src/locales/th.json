@@ -1772,6 +1772,8 @@
       "regionMiddleEast": "ตะวันออกกลาง",
       "regionAfrica": "แอฟริกา",
       "regionOceania": "โอเชียเนีย",
+
+      "regionChina": "จีน",
       "invalidHandle": "ป้อนแฮนเดิล YouTube ที่ถูกต้อง (เช่น @ชื่อช่อง)",
       "verifying": "กำลังตรวจสอบ…",
       "hlsUrl": "URL สตรีม HLS (ไม่บังคับ)",

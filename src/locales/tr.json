@@ -1772,6 +1772,8 @@
       "regionMiddleEast": "Orta Doğu",
       "regionAfrica": "Afrika",
       "regionOceania": "Okyanusya",
+
+      "regionChina": "Çin",
       "invalidHandle": "Geçerli bir YouTube tanıtıcısı girin (örn. @KanalAdı)",
       "verifying": "Doğrulanıyor…",
       "hlsUrl": "HLS Akış URL (isteğe bağlı)",

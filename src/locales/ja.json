@@ -1772,6 +1772,8 @@
       "regionMiddleEast": "中東",
       "regionAfrica": "アフリカ",
       "regionOceania": "オセアニア",
+
+      "regionChina": "中国",
       "invalidHandle": "有効なYouTubeハンドルを入力してください（例: @ChannelName）",
       "verifying": "確認中…",
       "hlsUrl": "HLSストリームURL（任意）",

@@ -1439,6 +1439,8 @@
       "regionMiddleEast": "Midden-Oosten",
       "regionAfrica": "Afrika",
       "regionOceania": "Oceanië",
+
+      "regionChina": "China",
       "botCheck": "YouTube vraagt om in te loggen om {{name}} af te spelen",
       "invalidHandle": "Voer een geldig YouTube-handle in (bijv. @Kanaalnaam)",
       "signInToYouTube": "Inloggen bij YouTube",

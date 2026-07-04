@@ -1996,6 +1996,8 @@
       "regionMiddleEast": "Közel-Kelet",
       "regionAfrica": "Afrika",
       "regionOceania": "Óceánia",
+
+      "regionChina": "Kína",
       "invalidHandle": "Adjon meg érvényes YouTube-fogantyút (például @ChannelName)",
       "verifying": "Ellenőrzés alatt…",
       "hlsUrl": "HLS Stream URL (opcionális)",

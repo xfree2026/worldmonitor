@@ -1439,6 +1439,8 @@
       "regionMiddleEast": "Mellanöstern",
       "regionAfrica": "Afrika",
       "regionOceania": "Oceanien",
+
+      "regionChina": "Kina",
       "botCheck": "YouTube kräver inloggning för att spela {{name}}",
       "invalidHandle": "Ange ett giltigt YouTube-handtag (t.ex. @Kanalnamn)",
       "signInToYouTube": "Logga in på YouTube",

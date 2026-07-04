@@ -1719,6 +1719,8 @@
       "regionMiddleEast": "Medio Oriente",
       "regionAfrica": "Africa",
       "regionOceania": "Oceania",
+
+      "regionChina": "Cina",
       "invalidHandle": "Inserisci un handle YouTube valido (es. @NomeCanale)",
       "verifying": "Verifica in corso…",
       "noResults": "Nessun canale trovato per \"{{term}}\"",

@@ -1772,6 +1772,8 @@
       "regionMiddleEast": "Μέση Ανατολή",
       "regionAfrica": "Αφρική",
       "regionOceania": "Ωκεανία",
+
+      "regionChina": "Κίνα",
       "invalidHandle": "Εισάγετε ένα έγκυρο YouTube handle (π.χ. @ChannelName)",
       "verifying": "Επαλήθευση…",
       "hlsUrl": "URL ροής HLS (προαιρετικό)",

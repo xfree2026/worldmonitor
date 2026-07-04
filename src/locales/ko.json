@@ -1772,6 +1772,8 @@
       "regionMiddleEast": "중동",
       "regionAfrica": "아프리카",
       "regionOceania": "오세아니아",
+
+      "regionChina": "중국",
       "invalidHandle": "유효한 YouTube 핸들을 입력하세요 (예: @ChannelName)",
       "verifying": "확인 중…",
       "hlsUrl": "HLS 스트림 URL (선택사항)",

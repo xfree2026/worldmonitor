@@ -1772,6 +1772,8 @@
       "regionMiddleEast": "Близкия изток",
       "regionAfrica": "Африка",
       "regionOceania": "Океания",
+
+      "regionChina": "Китай",
       "invalidHandle": "Въведете валидна YouTube манипулатор (напр. @ChannelName)",
       "verifying": "Проверка…",
       "hlsUrl": "URL на HLS поток (незадължително)",

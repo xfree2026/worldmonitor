@@ -1772,6 +1772,8 @@
       "regionMiddleEast": "中东",
       "regionAfrica": "非洲",
       "regionOceania": "大洋洲",
+
+      "regionChina": "中国",
       "invalidHandle": "请输入有效的YouTube用户名（例如 @ChannelName）",
       "verifying": "验证中…",
       "hlsUrl": "HLS流地址（可选）",

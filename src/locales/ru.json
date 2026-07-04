@@ -1774,6 +1774,8 @@
       "regionMiddleEast": "Ближний Восток",
       "regionAfrica": "Африка",
       "regionOceania": "Океания",
+
+      "regionChina": "Китай",
       "invalidHandle": "Введите корректный YouTube-дескриптор (например, @ChannelName)",
       "verifying": "Проверка…",
       "hlsUrl": "URL HLS-потока (необязательно)",

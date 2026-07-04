@@ -1752,6 +1752,8 @@
       "regionMiddleEast": "Blízký východ",
       "regionAfrica": "Afrika",
       "regionOceania": "Oceánie",
+
+      "regionChina": "Čína",
       "invalidHandle": "Zadejte platný úchyt YouTube (např. @NazevKanalu)",
       "verifying": "Ověřování…",
       "noResults": "Nebyly nalezeny žádné kanály odpovídající \"{{term}}\"",

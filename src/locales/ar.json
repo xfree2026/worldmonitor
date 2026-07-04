@@ -1656,6 +1656,8 @@
       "regionMiddleEast": "الشرق الأوسط",
       "regionAfrica": "أفريقيا",
       "regionOceania": "أوقيانوسيا",
+
+      "regionChina": "الصين",
       "botCheck": "يطلب YouTube تسجيل الدخول لتشغيل {{name}}",
       "invalidHandle": "أدخل معرّف YouTube صالح (مثال: @ChannelName)",
       "signInToYouTube": "تسجيل الدخول إلى YouTube",

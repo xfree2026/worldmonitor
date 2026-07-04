@@ -1772,6 +1772,8 @@
       "regionMiddleEast": "Trung Đông",
       "regionAfrica": "Châu Phi",
       "regionOceania": "Châu Đại Dương",
+
+      "regionChina": "Trung Quốc",
       "invalidHandle": "Nhập handle YouTube hợp lệ (ví dụ: @TênKênh)",
       "verifying": "Đang xác minh…",
       "hlsUrl": "URL luồng HLS (tùy chọn)",
