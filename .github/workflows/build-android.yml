@@ -53,13 +53,13 @@ jobs:
           cache-on-failure: true
 
       - name: Setup Java 17
-        uses: actions/setup-java@dd7762d3836f3b95f9c6e9e2236c180f19f84f7e
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@8d5d3ba2b9d66d7b33f6963a92b4f4e014b58a05
+        uses: android-actions/setup-android@v3
         with:
           packages: |
             platforms;android-34
@@ -140,7 +140,7 @@ jobs:
           ls -lh world-monitor-v${VERSION}-android.*
 
       - name: Upload APK to release
-        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf6f9
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v__VERSION__-android
           files: |
