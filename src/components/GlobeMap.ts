@@ -1912,7 +1912,7 @@ export class GlobeMap {
         ${layers.map(({ key, label, icon, premium }) => {
           const isLocked = premium === 'locked' && !_wmKey;
           const isEnhanced = premium === 'enhanced' && !_wmKey;
-          const explainLabel = escapeHtml(`Explain ${label} layer`);
+          const explainLabel = escapeHtml(`说明「${label}」图层`);
           const hasExplanation = hasCuratedLayerExplanation(key);
           return `
           <div class="layer-toggle-row" data-layer="${key}">

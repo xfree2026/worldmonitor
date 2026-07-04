@@ -5414,7 +5414,7 @@ export class DeckGLMap {
       label: resolveLayerLabel(def, t),
       icon: def.icon,
       premium: def.premium,
-      explainLabel: escapeHtml(`Explain ${resolveLayerLabel(def, t)} layer`),
+      explainLabel: escapeHtml(`说明「${resolveLayerLabel(def, t)}」图层`),
       hasExplanation: hasCuratedLayerExplanation(def.key),
     }));
 

@@ -541,7 +541,7 @@ export class MapComponent {
 
     layers.forEach((layer) => {
       const layerLabel = this.getLayerControlLabel(layer);
-      const explainLabel = `Explain ${layerLabel} layer`;
+      const explainLabel = `说明「${layerLabel}」图层`;
       const row = document.createElement('div');
       row.className = 'layer-toggle-row';
       row.dataset.layer = layer;
