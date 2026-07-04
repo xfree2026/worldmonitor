@@ -127,6 +127,75 @@ jobs:
           echo "apk_path=${APK_FILE}" >> "$GITHUB_OUTPUT"
           echo "aab_path=${AAB_FILE}" >> "$GITHUB_OUTPUT"
 
+      - name: 签名 APK（自签名 keystore）
+        id: sign
+        shell: bash
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+        run: |
+          # Tauri Android 默认输出 unsigned APK，需手动签名才能安装
+          set -e
+          UNSIGNED_APK="${{ steps.locate.outputs.apk_path }}"
+          AAB_FILE="${{ steps.locate.outputs.aab_path }}"
+          KEYSTORE="$HOME/release.keystore"
+          STORE_PASS="worldmonitor2026"
+          ALIAS="wm-release"
+          KEY_PASS="worldmonitor2026"
+
+          echo "=== 1. 生成自签名 keystore ==="
+          keytool -genkey -v \
+            -keystore "$KEYSTORE" \
+            -alias "$ALIAS" \
+            -keyalg RSA -keysize 2048 -validity 36500 \
+            -storepass "$STORE_PASS" -keypass "$KEY_PASS" \
+            -dname "CN=WorldMonitor, OU=Dev, O=WorldMonitor, L=Beijing, ST=Beijing, C=CN"
+
+          # 定位 build-tools 中的 apksigner 和 zipalign
+          BUILD_TOOLS_DIR=$(ls -d ${ANDROID_HOME}/build-tools/*/ 2>/dev/null | sort -V | tail -1)
+          if [ -z "$BUILD_TOOLS_DIR" ]; then
+            echo "::error::未找到 Android build-tools"
+            exit 1
+          fi
+          APKSIGNER="${BUILD_TOOLS_DIR}apksigner"
+          ZIPALIGN="${BUILD_TOOLS_DIR}zipalign"
+          echo "apksigner: $APKSIGNER"
+          echo "zipalign: $ZIPALIGN"
+
+          echo "=== 2. zipalign 对齐 APK ==="
+          ALIGNED_APK="${UNSIGNED_APK%.apk}-aligned.apk"
+          "$ZIPALIGN" -f -p 4 "$UNSIGNED_APK" "$ALIGNED_APK"
+
+          echo "=== 3. apksigner 签名 APK ==="
+          SIGNED_APK="${UNSIGNED_APK%.apk}-signed.apk"
+          "$APKSIGNER" sign \
+            --ks "$KEYSTORE" \
+            --ks-key-alias "$ALIAS" \
+            --ks-pass "pass:$STORE_PASS" \
+            --key-pass "pass:$KEY_PASS" \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out "$SIGNED_APK" \
+            "$ALIGNED_APK"
+
+          echo "=== 4. 验证签名 ==="
+          "$APKSIGNER" verify --verbose "$SIGNED_APK" | head -10
+
+          echo "=== 5. 签名 AAB（如存在）==="
+          if [ -n "$AAB_FILE" ] && [ -f "$AAB_FILE" ]; then
+            SIGNED_AAB="${AAB_FILE%.aab}-signed.aab"
+            jarsigner -keystore "$KEYSTORE" -storepass "$STORE_PASS" \
+              -signedjar "$SIGNED_AAB" "$AAB_FILE" "$ALIAS"
+            echo "AAB 已签名: $SIGNED_AAB"
+            echo "aab_signed_path=${SIGNED_AAB}" >> "$GITHUB_OUTPUT"
+          fi
+
+          # 用签名后的 APK 替换 unsigned 版本
+          cp "$SIGNED_APK" "$UNSIGNED_APK"
+          rm -f "$ALIGNED_APK" "$SIGNED_APK"
+          echo "apk_signed=true" >> "$GITHUB_OUTPUT"
+          echo "=== 签名完成 ==="
+
       - name: 用版本号重命名产物
         id: rename
         shell: bash
@@ -138,6 +207,9 @@ jobs:
             cp "${{ steps.locate.outputs.aab_path }}" "world-monitor-v${VERSION}-android.aab"
           fi
           ls -lh world-monitor-v${VERSION}-android.*
+          echo "=== 验证最终 APK 签名 ==="
+          BUILD_TOOLS_DIR=$(ls -d ${ANDROID_HOME}/build-tools/*/ 2>/dev/null | sort -V | tail -1)
+          "${BUILD_TOOLS_DIR}apksigner" verify --verbose "world-monitor-v${VERSION}-android.apk" | head -5
 
       - name: 创建 Release 并上传 APK/AAB
         uses: softprops/action-gh-release@v2
