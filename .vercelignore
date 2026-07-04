@@ -24,3 +24,4 @@ target/
 # 指向官方 API (https://api.worldmonitor.app)，无需本地函数。
 # 注意：前导 / 表示只匹配根目录，避免误伤 docs/api/ 等子目录
 /api/
+/server/
