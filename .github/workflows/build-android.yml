@@ -127,28 +127,48 @@ jobs:
           echo "apk_path=${APK_FILE}" >> "$GITHUB_OUTPUT"
           echo "aab_path=${AAB_FILE}" >> "$GITHUB_OUTPUT"
 
-      - name: 签名 APK（自签名 keystore）
+      - name: 签名 APK
         id: sign
         shell: bash
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          # GitHub Secrets：用户本地生成的 keystore（base64 编码）
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           # Tauri Android 默认输出 unsigned APK，需手动签名才能安装
+          # 优先使用 GitHub Secrets 中的 keystore；未配置时回退到临时自签名
           set -e
           UNSIGNED_APK="${{ steps.locate.outputs.apk_path }}"
           AAB_FILE="${{ steps.locate.outputs.aab_path }}"
           KEYSTORE="$HOME/release.keystore"
-          STORE_PASS="worldmonitor2026"
-          ALIAS="wm-release"
-          KEY_PASS="worldmonitor2026"
 
-          echo "=== 1. 生成自签名 keystore ==="
-          keytool -genkey -v \
-            -keystore "$KEYSTORE" \
-            -alias "$ALIAS" \
-            -keyalg RSA -keysize 2048 -validity 36500 \
-            -storepass "$STORE_PASS" -keypass "$KEY_PASS" \
-            -dname "CN=WorldMonitor, OU=Dev, O=WorldMonitor, L=Beijing, ST=Beijing, C=CN"
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "=== 使用 GitHub Secrets 中的 keystore ==="
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE"
+            STORE_PASS="$ANDROID_KEYSTORE_PASSWORD"
+            ALIAS="$ANDROID_KEY_ALIAS"
+            KEY_PASS="$ANDROID_KEY_PASSWORD"
+            if [ -z "$STORE_PASS" ] || [ -z "$ALIAS" ] || [ -z "$KEY_PASS" ]; then
+              echo "::error::已配置 ANDROID_KEYSTORE_BASE64，但 ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS / ANDROID_KEY_PASSWORD 缺失"
+              exit 1
+            fi
+            echo "keystore 已从 Secrets 解码，alias=$ALIAS"
+          else
+            echo "=== 未配置 Secrets，生成临时自签名 keystore ==="
+            STORE_PASS="worldmonitor2026"
+            ALIAS="wm-release"
+            KEY_PASS="worldmonitor2026"
+            keytool -genkey -v \
+              -keystore "$KEYSTORE" \
+              -alias "$ALIAS" \
+              -keyalg RSA -keysize 2048 -validity 36500 \
+              -storepass "$STORE_PASS" -keypass "$KEY_PASS" \
+              -dname "CN=WorldMonitor, OU=Dev, O=WorldMonitor, L=Beijing, ST=Beijing, C=CN"
+            echo "::warning::使用临时自签名 keystore，每次构建签名不同，无法升级覆盖安装。建议配置 GitHub Secrets。"
+          fi
 
           # 定位 build-tools 中的 apksigner 和 zipalign
           BUILD_TOOLS_DIR=$(ls -d ${ANDROID_HOME}/build-tools/*/ 2>/dev/null | sort -V | tail -1)
@@ -161,11 +181,11 @@ jobs:
           echo "apksigner: $APKSIGNER"
           echo "zipalign: $ZIPALIGN"
 
-          echo "=== 2. zipalign 对齐 APK ==="
+          echo "=== zipalign 对齐 APK ==="
           ALIGNED_APK="${UNSIGNED_APK%.apk}-aligned.apk"
           "$ZIPALIGN" -f -p 4 "$UNSIGNED_APK" "$ALIGNED_APK"
 
-          echo "=== 3. apksigner 签名 APK ==="
+          echo "=== apksigner 签名 APK ==="
           SIGNED_APK="${UNSIGNED_APK%.apk}-signed.apk"
           "$APKSIGNER" sign \
             --ks "$KEYSTORE" \
@@ -178,16 +198,15 @@ jobs:
             --out "$SIGNED_APK" \
             "$ALIGNED_APK"
 
-          echo "=== 4. 验证签名 ==="
+          echo "=== 验证签名 ==="
           "$APKSIGNER" verify --verbose "$SIGNED_APK" | head -10
 
-          echo "=== 5. 签名 AAB（如存在）==="
+          echo "=== 签名 AAB（如存在）==="
           if [ -n "$AAB_FILE" ] && [ -f "$AAB_FILE" ]; then
             SIGNED_AAB="${AAB_FILE%.aab}-signed.aab"
             jarsigner -keystore "$KEYSTORE" -storepass "$STORE_PASS" \
               -signedjar "$SIGNED_AAB" "$AAB_FILE" "$ALIAS"
             echo "AAB 已签名: $SIGNED_AAB"
-            echo "aab_signed_path=${SIGNED_AAB}" >> "$GITHUB_OUTPUT"
           fi
 
           # 用签名后的 APK 替换 unsigned 版本
