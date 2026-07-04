@@ -16,17 +16,17 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-reqwest = { version = "0.12", default-features = false, features = ["native-tls", "json"] }
+reqwest = { version = "0.12", default-features = false, features = ["json"] }
 getrandom = "0.2"
 
-# 桌面端密钥保险库：macOS / Windows / Linux 原生后端
-# Android 平台无原生 keyring 后端，使用内存存根（在 main.rs 中通过 cfg 门控）
+# 桌面端：使用系统 keyring + native-tls（macOS / Windows / Linux 原生后端）
 [target.'cfg(not(target_os = "android"))'.dependencies]
 keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native-sync-persistent", "crypto-rust"] }
+reqwest = { version = "0.12", default-features = false, features = ["native-tls"] }
 
+# Android：rustls-tls（NDK 交叉编译无需 OpenSSL）+ getrandom js feature
 [target.'cfg(target_os = "android")'.dependencies]
-# Android 上用 reqwest 内置 rustls 替代 native-tls（NDK 交叉编译更稳定）
-# 注意：这里不重复列出 reqwest，主依赖中的 native-tls 在 Android 上会被忽略
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 getrandom = { version = "0.2", features = ["js"] }
 
 [profile.release]
