@@ -382,6 +382,18 @@ function polymarketPlugin(): Plugin {
 }
 
 /**
+ * 批量动态导入模块，用变量拼接路径绕过 esbuild 静态分析。
+ *
+ * 直接写 import('./server/...') 会被 esbuild 在构建时静态分析，
+ * 当 server/ 被 .vercelignore 排除后会报 "Could not resolve"。
+ * 这里把模块路径放在数组里运行时拼接，esbuild 无法静态推断路径，
+ * 也就不会在构建时尝试解析这些 dev-only 的模块。
+ */
+async function importDevModules(paths: string[]): Promise<any[]> {
+  return Promise.all(paths.map(p => import(/* @vite-ignore */ p)));
+}
+
+/**
  * Vite dev server plugin for sebuf API routes.
  *
  * Intercepts requests matching /api/{domain}/v1/* and routes them through
@@ -423,61 +435,64 @@ function sebufApiPlugin(): Plugin {
       scenarioServerMod, scenarioHandlerMod,
       shippingV2ServerMod, shippingV2HandlerMod,
     ] = await Promise.all([
-        import('./server/router'),
-        import('./server/cors'),
-        import('./server/error-mapper'),
-        import('./src/generated/server/worldmonitor/seismology/v1/service_server'),
-        import('./server/worldmonitor/seismology/v1/handler'),
-        import('./src/generated/server/worldmonitor/wildfire/v1/service_server'),
-        import('./server/worldmonitor/wildfire/v1/handler'),
-        import('./src/generated/server/worldmonitor/climate/v1/service_server'),
-        import('./server/worldmonitor/climate/v1/handler'),
-        import('./src/generated/server/worldmonitor/prediction/v1/service_server'),
-        import('./server/worldmonitor/prediction/v1/handler'),
-        import('./src/generated/server/worldmonitor/displacement/v1/service_server'),
-        import('./server/worldmonitor/displacement/v1/handler'),
-        import('./src/generated/server/worldmonitor/aviation/v1/service_server'),
-        import('./server/worldmonitor/aviation/v1/handler'),
-        import('./src/generated/server/worldmonitor/research/v1/service_server'),
-        import('./server/worldmonitor/research/v1/handler'),
-        import('./src/generated/server/worldmonitor/unrest/v1/service_server'),
-        import('./server/worldmonitor/unrest/v1/handler'),
-        import('./src/generated/server/worldmonitor/conflict/v1/service_server'),
-        import('./server/worldmonitor/conflict/v1/handler'),
-        import('./src/generated/server/worldmonitor/maritime/v1/service_server'),
-        import('./server/worldmonitor/maritime/v1/handler'),
-        import('./src/generated/server/worldmonitor/cyber/v1/service_server'),
-        import('./server/worldmonitor/cyber/v1/handler'),
-        import('./src/generated/server/worldmonitor/economic/v1/service_server'),
-        import('./server/worldmonitor/economic/v1/handler'),
-        import('./src/generated/server/worldmonitor/infrastructure/v1/service_server'),
-        import('./server/worldmonitor/infrastructure/v1/handler'),
-        import('./src/generated/server/worldmonitor/market/v1/service_server'),
-        import('./server/worldmonitor/market/v1/handler'),
-        import('./src/generated/server/worldmonitor/news/v1/service_server'),
-        import('./server/worldmonitor/news/v1/handler'),
-        import('./src/generated/server/worldmonitor/intelligence/v1/service_server'),
-        import('./server/worldmonitor/intelligence/v1/handler'),
-        import('./src/generated/server/worldmonitor/military/v1/service_server'),
-        import('./server/worldmonitor/military/v1/handler'),
-        import('./src/generated/server/worldmonitor/positive_events/v1/service_server'),
-        import('./server/worldmonitor/positive-events/v1/handler'),
-        import('./src/generated/server/worldmonitor/giving/v1/service_server'),
-        import('./server/worldmonitor/giving/v1/handler'),
-        import('./src/generated/server/worldmonitor/trade/v1/service_server'),
-        import('./server/worldmonitor/trade/v1/handler'),
-        import('./src/generated/server/worldmonitor/supply_chain/v1/service_server'),
-        import('./server/worldmonitor/supply-chain/v1/handler'),
-        import('./src/generated/server/worldmonitor/natural/v1/service_server'),
-        import('./server/worldmonitor/natural/v1/handler'),
-        import('./src/generated/server/worldmonitor/resilience/v1/service_server'),
-        import('./server/worldmonitor/resilience/v1/handler'),
-        import('./src/generated/server/worldmonitor/leads/v1/service_server'),
-        import('./server/worldmonitor/leads/v1/handler'),
-        import('./src/generated/server/worldmonitor/scenario/v1/service_server'),
-        import('./server/worldmonitor/scenario/v1/handler'),
-        import('./src/generated/server/worldmonitor/shipping/v2/service_server'),
-        import('./server/worldmonitor/shipping/v2/handler'),
+        // 用变量拼接路径绕过 esbuild 静态分析，避免构建时解析 server/ 模块
+        // （sebufApiPlugin 只在 dev server 运行，build 时不应触发解析）
+        // 注意：直接 import('./server/...') 会被 esbuild 静态分析，server/ 被排除后报错
+        ...(await importDevModules([
+          './server/router', './server/cors', './server/error-mapper',
+          './src/generated/server/worldmonitor/seismology/v1/service_server',
+          './server/worldmonitor/seismology/v1/handler',
+          './src/generated/server/worldmonitor/wildfire/v1/service_server',
+          './server/worldmonitor/wildfire/v1/handler',
+          './src/generated/server/worldmonitor/climate/v1/service_server',
+          './server/worldmonitor/climate/v1/handler',
+          './src/generated/server/worldmonitor/prediction/v1/service_server',
+          './server/worldmonitor/prediction/v1/handler',
+          './src/generated/server/worldmonitor/displacement/v1/service_server',
+          './server/worldmonitor/displacement/v1/handler',
+          './src/generated/server/worldmonitor/aviation/v1/service_server',
+          './server/worldmonitor/aviation/v1/handler',
+          './src/generated/server/worldmonitor/research/v1/service_server',
+          './server/worldmonitor/research/v1/handler',
+          './src/generated/server/worldmonitor/unrest/v1/service_server',
+          './server/worldmonitor/unrest/v1/handler',
+          './src/generated/server/worldmonitor/conflict/v1/service_server',
+          './server/worldmonitor/conflict/v1/handler',
+          './src/generated/server/worldmonitor/maritime/v1/service_server',
+          './server/worldmonitor/maritime/v1/handler',
+          './src/generated/server/worldmonitor/cyber/v1/service_server',
+          './server/worldmonitor/cyber/v1/handler',
+          './src/generated/server/worldmonitor/economic/v1/service_server',
+          './server/worldmonitor/economic/v1/handler',
+          './src/generated/server/worldmonitor/infrastructure/v1/service_server',
+          './server/worldmonitor/infrastructure/v1/handler',
+          './src/generated/server/worldmonitor/market/v1/service_server',
+          './server/worldmonitor/market/v1/handler',
+          './src/generated/server/worldmonitor/news/v1/service_server',
+          './server/worldmonitor/news/v1/handler',
+          './src/generated/server/worldmonitor/intelligence/v1/service_server',
+          './server/worldmonitor/intelligence/v1/handler',
+          './src/generated/server/worldmonitor/military/v1/service_server',
+          './server/worldmonitor/military/v1/handler',
+          './src/generated/server/worldmonitor/positive_events/v1/service_server',
+          './server/worldmonitor/positive-events/v1/handler',
+          './src/generated/server/worldmonitor/giving/v1/service_server',
+          './server/worldmonitor/giving/v1/handler',
+          './src/generated/server/worldmonitor/trade/v1/service_server',
+          './server/worldmonitor/trade/v1/handler',
+          './src/generated/server/worldmonitor/supply_chain/v1/service_server',
+          './server/worldmonitor/supply-chain/v1/handler',
+          './src/generated/server/worldmonitor/natural/v1/service_server',
+          './server/worldmonitor/natural/v1/handler',
+          './src/generated/server/worldmonitor/resilience/v1/service_server',
+          './server/worldmonitor/resilience/v1/handler',
+          './src/generated/server/worldmonitor/leads/v1/service_server',
+          './server/worldmonitor/leads/v1/handler',
+          './src/generated/server/worldmonitor/scenario/v1/service_server',
+          './server/worldmonitor/scenario/v1/handler',
+          './src/generated/server/worldmonitor/shipping/v2/service_server',
+          './server/worldmonitor/shipping/v2/handler',
+        ])),
       ]);
 
     const serverOptions = { onError: errorMod.mapErrorToResponse };
