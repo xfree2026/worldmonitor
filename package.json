@@ -47,6 +47,7 @@
     "build:sidecar-sebuf": "node scripts/build-sidecar-sebuf.mjs",
     "build:desktop": "node scripts/build-sidecar-sebuf.mjs && node scripts/build-sidecar-handlers.mjs && tsc && vite build",
     "build:full": "npm run build:openapi && npm run build:agent-skills && npm run build:blog && cross-env-shell VITE_VARIANT=full \"tsc && vite build\"",
+    "build:edgeone": "npm run build:full && node scripts/edgeone-postbuild.mjs",
     "build:tech": "npm run build:openapi && npm run build:agent-skills && cross-env-shell VITE_VARIANT=tech \"tsc && vite build\"",
     "build:finance": "npm run build:openapi && npm run build:agent-skills && cross-env-shell VITE_VARIANT=finance \"tsc && vite build\"",
     "build:happy": "npm run build:openapi && npm run build:agent-skills && cross-env-shell VITE_VARIANT=happy \"tsc && vite build\"",
