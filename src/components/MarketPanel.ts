@@ -365,15 +365,23 @@ interface HyperliquidFlowView {
 // CCYUSD=X (e.g. EURUSD): USD is quote, rate = USD/FC → XAU_FC = XAU_USD / rate
 // USDCCY=X (e.g. USDJPY, USDCHF): USD is base, rate = FC/USD → XAU_FC = XAU_USD * rate
 const XAU_CURRENCY_CONFIG: Array<{ symbol: string; label: string; flag: string; multiply: boolean }> = [
+  // 中国视角：人民币（CNY）优先展示
+  { symbol: 'USDCNY=X',  label: 'CNY', flag: '🇨🇳', multiply: true  },
   { symbol: 'EURUSD=X',  label: 'EUR', flag: '🇪🇺', multiply: false },
   { symbol: 'GBPUSD=X',  label: 'GBP', flag: '🇬🇧', multiply: false },
   { symbol: 'USDJPY=X',  label: 'JPY', flag: '🇯🇵', multiply: true  },
-  { symbol: 'USDCNY=X',  label: 'CNY', flag: '🇨🇳', multiply: true  },
   { symbol: 'USDINR=X',  label: 'INR', flag: '🇮🇳', multiply: true  },
   { symbol: 'AUDUSD=X',  label: 'AUD', flag: '🇦🇺', multiply: false },
   { symbol: 'USDCHF=X',  label: 'CHF', flag: '🇨🇭', multiply: true  },
   { symbol: 'USDCAD=X',  label: 'CAD', flag: '🇨🇦', multiply: true  },
   { symbol: 'USDTRY=X',  label: 'TRY', flag: '🇹🇷', multiply: true  },
+];
+
+// 贵金属人民币计价配置（中国视角：黄金/白银/铂金 人民币报价）
+const METALS_CNY_CONFIG: Array<{ symbol: string; name: string; unit: string }> = [
+  { symbol: 'GC=F', name: '黄金', unit: 'XAU/CNY' },
+  { symbol: 'SI=F', name: '白银', unit: 'XAG/CNY' },
+  { symbol: 'PL=F', name: '铂金', unit: 'XPT/CNY' },
 ];
 
 export class CommoditiesPanel extends Panel {
@@ -390,7 +398,7 @@ export class CommoditiesPanel extends Panel {
       if (
         tab === 'commodities' ||
         tab === 'fx' ||
-        (tab === 'xau' && SITE_VARIANT === 'commodity')
+        tab === 'xau' // 中国视角：贵金属人民币计价 tab 在所有变体可见
       ) {
         this._tab = tab as CommoditiesTab;
         this._render();
@@ -409,21 +417,51 @@ export class CommoditiesPanel extends Panel {
   }
 
   private _buildTabBar(hasFx: boolean, hasXau: boolean): string {
-    const firstTabLabel = 'Commodities';
+    const firstTabLabel = '大宗商品';
     const tabs: string[] = [
       `<button class="panel-tab${this._tab === 'commodities' ? ' active' : ''}" data-tab="commodities" style="font-size:11px;padding:3px 10px">${firstTabLabel}</button>`,
     ];
-    if (hasFx) tabs.push(`<button class="panel-tab${this._tab === 'fx' ? ' active' : ''}" data-tab="fx" style="font-size:11px;padding:3px 10px">EUR FX</button>`);
-    if (hasXau) tabs.push(`<button class="panel-tab${this._tab === 'xau' ? ' active' : ''}" data-tab="xau" style="font-size:11px;padding:3px 10px">XAU/FX</button>`);
+    if (hasFx) tabs.push(`<button class="panel-tab${this._tab === 'fx' ? ' active' : ''}" data-tab="fx" style="font-size:11px;padding:3px 10px">欧元汇率</button>`);
+    if (hasXau) tabs.push(`<button class="panel-tab${this._tab === 'xau' ? ' active' : ''}" data-tab="xau" style="font-size:11px;padding:3px 10px">贵金属/人民币</button>`);
     return tabs.length > 1 ? `<div style="display:flex;gap:4px;margin-bottom:8px">${tabs.join('')}</div>` : '';
   }
 
   private _renderXau(): string {
     const gcf = this._commodityData.find(d => d.symbol === 'GC=F' && d.price !== null);
-    if (!gcf?.price) return `<div style="padding:8px;color:var(--text-dim);font-size:12px">Gold price unavailable</div>`;
+    if (!gcf?.price) return `<div style="padding:8px;color:var(--text-dim);font-size:12px">黄金价格暂不可用</div>`;
 
     const goldUsd = gcf.price;
     const fxMap = new Map(this._commodityData.filter(d => d.symbol?.endsWith('=X')).map(d => [d.symbol!, d]));
+    const cnyFx = fxMap.get('USDCNY=X');
+    const cnyRate = cnyFx?.price && Number.isFinite(cnyFx.price) ? cnyFx.price : null;
+
+    // ── 贵金属人民币计价（中国视角：黄金/白银/铂金 CNY 报价）──
+    let metalsCnySection = '';
+    if (cnyRate) {
+      const metalRows = METALS_CNY_CONFIG.map(m => {
+        const quote = this._commodityData.find(d => d.symbol === m.symbol && d.price !== null);
+        const usd = quote?.price;
+        if (!usd || !Number.isFinite(usd)) return null;
+        const cnyPrice = usd * cnyRate;
+        if (!Number.isFinite(cnyPrice) || cnyPrice <= 0) return null;
+        const formatted = Math.round(cnyPrice).toLocaleString();
+        const change = quote?.change;
+        const changeStr = (typeof change === 'number' && Number.isFinite(change))
+          ? `${change >= 0 ? '+' : ''}${(change * cnyRate).toFixed(0)}`
+          : '';
+        const changeClass = (typeof change === 'number' && Number.isFinite(change))
+          ? (change >= 0 ? 'change-positive' : 'change-negative')
+          : '';
+        return `<div class="commodity-item">
+          <div class="commodity-name">${escapeHtml(m.name)} ${escapeHtml(m.unit)}</div>
+          <div class="commodity-price" style="font-size:12px">¥${escapeHtml(formatted)}</div>
+          ${changeStr ? `<div class="commodity-change ${escapeHtml(changeClass)}">${escapeHtml(changeStr)}</div>` : ''}
+        </div>`;
+      }).filter(Boolean);
+      if (metalRows.length > 0) {
+        metalsCnySection = `<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">贵金属人民币计价（1 盎司）</div><div class="commodities-grid">${metalRows.join('')}</div></div>`;
+      }
+    }
 
     const rows = XAU_CURRENCY_CONFIG.map(cfg => {
       const fx = fxMap.get(cfg.symbol);
@@ -437,21 +475,22 @@ export class CommoditiesPanel extends Panel {
       </div>`;
     }).filter(Boolean);
 
-    if (rows.length === 0) {
+    if (rows.length === 0 && !metalsCnySection) {
       const placeholders = XAU_CURRENCY_CONFIG.map(cfg =>
         `<div class="commodity-item">
           <div class="commodity-name">${escapeHtml(cfg.flag)} XAU/${escapeHtml(cfg.label)}</div>
           <div class="commodity-price" style="font-size:11px">--</div>
         </div>`
       ).join('');
-      return `<div class="commodities-grid">${placeholders}</div><div style="margin-top:6px;font-size:9px;color:var(--text-dim)">FX rates unavailable</div>`;
+      return `<div class="commodities-grid">${placeholders}</div><div style="margin-top:6px;font-size:9px;color:var(--text-dim)">汇率暂不可用</div>`;
     }
-    return `<div class="commodities-grid">${rows.join('')}</div><div style="margin-top:6px;font-size:9px;color:var(--text-dim)">Computed from GC=F + Yahoo FX</div>`;
+    return `${metalsCnySection}<div style="font-size:11px;color:var(--text-dim);margin:4px 0">黄金多币种报价</div><div class="commodities-grid">${rows.join('')}</div><div style="margin-top:6px;font-size:9px;color:var(--text-dim)">基于 GC=F + Yahoo 汇率计算</div>`;
   }
 
   private _render(): void {
     const hasFx = this._fxRates.length > 0;
-    const hasXau = SITE_VARIANT === 'commodity' && this._commodityData.some(d => d.symbol === 'GC=F' && d.price !== null);
+    // 中国视角：贵金属人民币计价 tab 在所有变体可见（不再仅限 commodity 变体）
+    const hasXau = this._commodityData.some(d => d.symbol === 'GC=F' && d.price !== null);
     if (this._tab === 'xau' && !hasXau) this._tab = 'commodities';
     const tabBar = this._buildTabBar(hasFx, hasXau);
 

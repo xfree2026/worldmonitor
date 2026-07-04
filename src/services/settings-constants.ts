@@ -3,6 +3,12 @@ import type { RuntimeSecretKey, RuntimeFeatureId } from './runtime-config';
 export const SIGNUP_URLS: Partial<Record<RuntimeSecretKey, string>> = {
   GROQ_API_KEY: 'https://console.groq.com/keys',
   OPENROUTER_API_KEY: 'https://openrouter.ai/settings/keys',
+  // 中国主流 AI 大模型 API Key 申请入口
+  DEEPSEEK_API_KEY: 'https://platform.deepseek.com/api_keys',
+  QWEN_API_KEY: 'https://bailian.console.aliyun.com/?apiKey=1',
+  GLM_API_KEY: 'https://open.bigmodel.cn/usercenter/apikeys',
+  KIMI_API_KEY: 'https://platform.moonshot.cn/console/api-keys',
+  BAICHUAN_API_KEY: 'https://platform.baichuan-ai.com/console/apikey',
   EXA_API_KEYS: 'https://dashboard.exa.ai/api-keys',
   BRAVE_API_KEYS: 'https://api-dashboard.search.brave.com/app/keys',
   SERPAPI_API_KEYS: 'https://serpapi.com/manage-api-key',
@@ -39,6 +45,12 @@ export const MASKED_SENTINEL = '__WM_MASKED__';
 export const HUMAN_LABELS: Record<RuntimeSecretKey, string> = {
   GROQ_API_KEY: 'Groq API Key',
   OPENROUTER_API_KEY: 'OpenRouter API Key',
+  // 中国主流 AI 大模型 API Key（中文标签）
+  DEEPSEEK_API_KEY: 'DeepSeek 深度求索 API Key',
+  QWEN_API_KEY: '通义千问 Qwen API Key',
+  GLM_API_KEY: '智谱 GLM API Key',
+  KIMI_API_KEY: 'Kimi 月之暗面 API Key',
+  BAICHUAN_API_KEY: '百川 Baichuan API Key',
   EXA_API_KEYS: 'Exa API Keys',
   BRAVE_API_KEYS: 'Brave Search API Keys',
   SERPAPI_API_KEYS: 'SerpAPI Keys',
@@ -75,8 +87,8 @@ export interface SettingsCategory {
 export const SETTINGS_CATEGORIES: SettingsCategory[] = [
   {
     id: 'ai',
-    label: 'AI & Summarization',
-    features: ['aiOllama', 'aiGroq', 'aiOpenRouter'],
+    label: 'AI 与摘要（中国大模型优先）',
+    features: ['aiDeepseek', 'aiQwen', 'aiGlm', 'aiKimi', 'aiBaichuan', 'aiOllama', 'aiGroq', 'aiOpenRouter'],
   },
   {
     id: 'economy',

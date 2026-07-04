@@ -7,6 +7,8 @@ import { readQueryLanguage, stripQueryLanguage } from '@/utils/i18n-url';
 // Keep only first-paint English strings in the entry chunk. The full English
 // dictionary is loaded through localeModules so it can split like other locales.
 import enShellTranslation from '../locales/en.shell.json';
+// 中国视角：同步加载完整中文 locale 作为首屏默认语言资源，确保新用户首屏即为中文。
+import zhTranslation from '../locales/zh.json';
 
 // Explicit-choice localStorage key. Written ONLY when the user manually picks
 // a language via Settings → Language. The default detector's `i18nextLng`
@@ -41,11 +43,12 @@ const localeModules = import.meta.glob<TranslationDictionary>(
 const RTL_LANGUAGES = new Set(['ar', 'fa']);
 
 function normalizeLanguage(lng: string): SupportedLanguage {
-  const base = (lng || 'en').split('-')[0]?.toLowerCase() || 'en';
+  const base = (lng || 'zh').split('-')[0]?.toLowerCase() || 'zh';
   if (SUPPORTED_LANGUAGE_SET.has(base as SupportedLanguage)) {
     return base as SupportedLanguage;
   }
-  return 'en';
+  // 中国视角：未识别语言默认回退到中文（zh）
+  return 'zh';
 }
 
 function applyDocumentDirection(lang: string): void {
@@ -178,28 +181,45 @@ export async function initI18n(): Promise<void> {
     },
     cacheUserLanguage: () => { /* writes go through explicit changeLanguage() */ },
   });
+  // 中国视角默认检测器：当用户未通过 URL 或设置显式选择语言时，默认使用中文。
+  // 放在 wmExplicit 之后、navigator 之前，确保新用户首屏即为中文。
+  detector.addDetector({
+    name: 'wmDefault',
+    lookup: () => 'zh',
+    cacheUserLanguage: () => { /* 默认语言不持久化，仅作检测兜底 */ },
+  });
 
   await i18next
     .use(detector)
     .init({
       resources: {
         en: { translation: enShellTranslation as TranslationDictionary },
+        // 中文完整 locale 同步注册，保证首屏中文渲染
+        zh: { translation: zhTranslation as TranslationDictionary },
       },
       supportedLngs: [...SUPPORTED_LANGUAGES],
       nonExplicitSupportedLngs: true,
-      fallbackLng: 'en',
+      // 中国视角：未匹配的 key 回退到中文
+      fallbackLng: 'zh',
       debug: import.meta.env.DEV,
       interpolation: {
         escapeValue: false, // not needed for these simple strings
       },
       detection: {
-        order: ['wmQuery', 'wmExplicit', 'navigator'],
+        // 优先级：URL 显式 > 用户设置显式 > 中文默认（中国视角）> 浏览器语言
+        order: ['wmQuery', 'wmExplicit', 'wmDefault', 'navigator'],
         caches: [], // never auto-write — only changeLanguage() persists
       },
     });
 
-  const detectedLanguage = normalizeLanguage(i18next.language || 'en');
-  if (detectedLanguage === 'en') {
+  const detectedLanguage = normalizeLanguage(i18next.language || 'zh');
+  // 中文 locale 已在 init 时同步注册，无需异步加载；仅当显式选择其他语言时才异步加载对应 locale。
+  loadedLanguages.add('zh');
+  i18next.addResourceBundle('zh', 'translation', zhTranslation as TranslationDictionary, true, true);
+  if (detectedLanguage === 'zh') {
+    // 中文已就绪，仅需后台预加载英文备用
+    preloadEnglishTranslation();
+  } else if (detectedLanguage === 'en') {
     preloadEnglishTranslation();
   } else {
     await Promise.all([
@@ -245,7 +265,8 @@ export async function changeLanguage(lng: string): Promise<void> {
 
 // Helper to get current language (normalized to short code)
 export function getCurrentLanguage(): string {
-  const lang = i18next.language || 'en';
+  // 中国视角：默认语言为中文
+  const lang = i18next.language || 'zh';
   return lang.split('-')[0]!;
 }
 

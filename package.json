@@ -1,7 +1,7 @@
 {
   "name": "world-monitor",
   "private": true,
-  "version": "2.8.0",
+  "version": "2.9.0",
   "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
@@ -90,6 +90,10 @@
     "desktop:build:full": "npm run version:sync && cross-env VITE_VARIANT=full VITE_DESKTOP_RUNTIME=1 tauri build",
     "desktop:build:tech": "npm run version:sync && cross-env VITE_VARIANT=tech VITE_DESKTOP_RUNTIME=1 tauri build --config src-tauri/tauri.tech.conf.json",
     "desktop:build:finance": "npm run version:sync && cross-env VITE_VARIANT=finance VITE_DESKTOP_RUNTIME=1 tauri build --config src-tauri/tauri.finance.conf.json",
+    "desktop:android:dev": "npm run version:sync && cross-env VITE_VARIANT=full VITE_DESKTOP_RUNTIME=1 tauri android dev --config src-tauri/tauri.android.conf.json",
+    "desktop:build:android": "npm run version:sync && cross-env VITE_VARIANT=full VITE_DESKTOP_RUNTIME=1 tauri android build --config src-tauri/tauri.android.conf.json",
+    "desktop:build:android:apk": "npm run version:sync && cross-env VITE_VARIANT=full VITE_DESKTOP_RUNTIME=1 tauri android build --apk --config src-tauri/tauri.android.conf.json",
+    "desktop:build:android:aab": "npm run version:sync && cross-env VITE_VARIANT=full VITE_DESKTOP_RUNTIME=1 tauri android build --aab --config src-tauri/tauri.android.conf.json",
     "desktop:package:macos:full": "node scripts/desktop-package.mjs --os macos --variant full",
     "desktop:package:macos:tech": "node scripts/desktop-package.mjs --os macos --variant tech",
     "desktop:package:windows:full": "node scripts/desktop-package.mjs --os windows --variant full",

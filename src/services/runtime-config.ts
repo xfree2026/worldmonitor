@@ -4,6 +4,12 @@ import { invokeTauri } from './tauri-bridge';
 export type RuntimeSecretKey =
   | 'GROQ_API_KEY'
   | 'OPENROUTER_API_KEY'
+  // 中国主流 AI 大模型 API Key
+  | 'DEEPSEEK_API_KEY'
+  | 'QWEN_API_KEY'
+  | 'GLM_API_KEY'
+  | 'KIMI_API_KEY'
+  | 'BAICHUAN_API_KEY'
   | 'EXA_API_KEYS'
   | 'BRAVE_API_KEYS'
   | 'SERPAPI_API_KEYS'
@@ -33,6 +39,12 @@ export type RuntimeSecretKey =
 export type RuntimeFeatureId =
   | 'aiGroq'
   | 'aiOpenRouter'
+  // 中国主流 AI 大模型
+  | 'aiDeepseek'
+  | 'aiQwen'
+  | 'aiGlm'
+  | 'aiKimi'
+  | 'aiBaichuan'
   | 'stockNewsSearchExa'
   | 'stockNewsSearchBrave'
   | 'stockNewsSearchSerpApi'
@@ -90,6 +102,12 @@ function getSidecarSecretValidateUrl(): string {
 const defaultToggles: Record<RuntimeFeatureId, boolean> = {
   aiGroq: true,
   aiOpenRouter: true,
+  // 中国 AI 大模型默认开启（中国视角优先）
+  aiDeepseek: true,
+  aiQwen: true,
+  aiGlm: true,
+  aiKimi: true,
+  aiBaichuan: true,
   stockNewsSearchExa: true,
   stockNewsSearchBrave: true,
   stockNewsSearchSerpApi: true,
@@ -136,6 +154,41 @@ export const RUNTIME_FEATURES: RuntimeFeatureDefinition[] = [
     description: 'Secondary LLM provider for AI summary fallback.',
     requiredSecrets: ['OPENROUTER_API_KEY'],
     fallback: 'Falls back to local browser model only.',
+  },
+  {
+    id: 'aiDeepseek',
+    name: 'DeepSeek 深度求索',
+    description: '中国主流 AI 大模型（OpenAI 兼容接口），中国视角首选 provider。',
+    requiredSecrets: ['DEEPSEEK_API_KEY'],
+    fallback: '回退到 通义千问 → 智谱GLM → Kimi → 百川 → Ollama → Groq → OpenRouter → 浏览器本地模型。',
+  },
+  {
+    id: 'aiQwen',
+    name: '通义千问 Qwen（阿里云百炼）',
+    description: '阿里云通义千问大模型，OpenAI 兼容接口（DashScope）。',
+    requiredSecrets: ['QWEN_API_KEY'],
+    fallback: '回退到 智谱GLM → Kimi → 百川 → Ollama → Groq → OpenRouter → 浏览器本地模型。',
+  },
+  {
+    id: 'aiGlm',
+    name: '智谱 GLM（BigModel）',
+    description: '智谱 AI GLM 大模型，OpenAI 兼容接口。',
+    requiredSecrets: ['GLM_API_KEY'],
+    fallback: '回退到 Kimi → 百川 → Ollama → Groq → OpenRouter → 浏览器本地模型。',
+  },
+  {
+    id: 'aiKimi',
+    name: 'Kimi 月之暗面（Moonshot）',
+    description: '月之暗面 Kimi 大模型，OpenAI 兼容接口。',
+    requiredSecrets: ['KIMI_API_KEY'],
+    fallback: '回退到 百川 → Ollama → Groq → OpenRouter → 浏览器本地模型。',
+  },
+  {
+    id: 'aiBaichuan',
+    name: '百川大模型 Baichuan',
+    description: '百川智能 Baichuan 大模型，OpenAI 兼容接口。',
+    requiredSecrets: ['BAICHUAN_API_KEY'],
+    fallback: '回退到 Ollama → Groq → OpenRouter → 浏览器本地模型。',
   },
   {
     id: 'stockNewsSearchExa',

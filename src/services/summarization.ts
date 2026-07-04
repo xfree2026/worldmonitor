@@ -19,7 +19,18 @@ import { createCircuitBreaker } from '@/utils';
 import { buildSummaryCacheKey } from '@/utils/summary-cache-key';
 import { NewsServiceClient } from '@/services/generated-rpc-clients';
 
-export type SummarizationProvider = 'ollama' | 'groq' | 'openrouter' | 'browser' | 'cache';
+export type SummarizationProvider =
+  | 'ollama'
+  | 'groq'
+  | 'openrouter'
+  // 中国主流 AI 大模型
+  | 'deepseek'
+  | 'qwen'
+  | 'glm'
+  | 'kimi'
+  | 'baichuan'
+  | 'browser'
+  | 'cache';
 
 export interface SummarizationResult {
   summary: string;
@@ -65,6 +76,12 @@ interface ApiProviderDef {
 }
 
 const API_PROVIDERS: ApiProviderDef[] = [
+  // 中国主流 AI 大模型优先（中国视角）
+  { featureId: 'aiDeepseek',    provider: 'deepseek',   label: 'DeepSeek 深度求索' },
+  { featureId: 'aiQwen',        provider: 'qwen',       label: '通义千问 Qwen' },
+  { featureId: 'aiGlm',         provider: 'glm',        label: '智谱 GLM' },
+  { featureId: 'aiKimi',        provider: 'kimi',       label: 'Kimi 月之暗面' },
+  { featureId: 'aiBaichuan',    provider: 'baichuan',   label: '百川 Baichuan' },
   { featureId: 'aiOllama',      provider: 'ollama',     label: 'Ollama' },
   { featureId: 'aiGroq',        provider: 'groq',       label: 'Groq AI' },
   { featureId: 'aiOpenRouter',  provider: 'openrouter', label: 'OpenRouter' },
@@ -199,7 +216,7 @@ export async function generateSummary(
   headlines: string[],
   onProgress?: ProgressCallback,
   geoContext?: string,
-  lang: string = 'en',
+  lang: string = getCurrentLanguage(),
   options?: SummarizeOptions,
 ): Promise<SummarizationResult | null> {
   if (!headlines || headlines.length < 2) {

@@ -9,7 +9,17 @@ export interface ProviderCredentials {
   extraBody?: Record<string, unknown>;
 }
 
-export type LlmProviderName = 'ollama' | 'groq' | 'openrouter' | 'generic';
+export type LlmProviderName =
+  | 'ollama'
+  | 'groq'
+  | 'openrouter'
+  | 'generic'
+  // 中国主流 AI 大模型（均为 OpenAI 兼容接口）
+  | 'deepseek'
+  | 'qwen'
+  | 'glm'
+  | 'kimi'
+  | 'baichuan';
 
 export interface ProviderCredentialOverrides {
   model?: string;
@@ -84,6 +94,77 @@ export function getProviderCredentials(
     };
   }
 
+  // ── 中国主流 AI 大模型（均提供 OpenAI 兼容接口）──
+  // DeepSeek（深度求索）
+  if (provider === 'deepseek') {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) return null;
+    return {
+      apiUrl: process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions',
+      model: overrides.model || process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    };
+  }
+
+  // 通义千问（阿里云百炼 DashScope OpenAI 兼容模式）
+  if (provider === 'qwen') {
+    const apiKey = process.env.QWEN_API_KEY;
+    if (!apiKey) return null;
+    return {
+      apiUrl: process.env.QWEN_API_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+      model: overrides.model || process.env.QWEN_MODEL || 'qwen-plus',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    };
+  }
+
+  // 智谱 GLM（BigModel OpenAI 兼容接口）
+  if (provider === 'glm') {
+    const apiKey = process.env.GLM_API_KEY;
+    if (!apiKey) return null;
+    return {
+      apiUrl: process.env.GLM_API_URL || 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+      model: overrides.model || process.env.GLM_MODEL || 'glm-4-flash',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    };
+  }
+
+  // Kimi（月之暗面 Moonshot）
+  if (provider === 'kimi') {
+    const apiKey = process.env.KIMI_API_KEY;
+    if (!apiKey) return null;
+    return {
+      apiUrl: process.env.KIMI_API_URL || 'https://api.moonshot.cn/v1/chat/completions',
+      model: overrides.model || process.env.KIMI_MODEL || 'moonshot-v1-8k',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    };
+  }
+
+  // 百川大模型（Baichuan AI）
+  if (provider === 'baichuan') {
+    const apiKey = process.env.BAICHUAN_API_KEY;
+    if (!apiKey) return null;
+    return {
+      apiUrl: process.env.BAICHUAN_API_URL || 'https://api.baichuan-ai.com/v1/chat/completions',
+      model: overrides.model || process.env.BAICHUAN_MODEL || 'Baichuan4',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    };
+  }
+
   // Generic OpenAI-compatible endpoint via LLM_API_URL/LLM_API_KEY/LLM_MODEL
   if (provider === 'generic') {
     const apiUrl = process.env.LLM_API_URL;
@@ -124,7 +205,12 @@ export function stripThinkingTags(text: string): string {
 }
 
 
-const PROVIDER_CHAIN = ['ollama', 'groq', 'openrouter', 'generic'] as const;
+// Provider chain — 中国主流 AI 大模型优先（中国视角），随后回退到国际 provider。
+// 顺序：DeepSeek → 通义千问 → 智谱 GLM → Kimi → 百川 → Ollama → Groq → OpenRouter → generic
+const PROVIDER_CHAIN = [
+  'deepseek', 'qwen', 'glm', 'kimi', 'baichuan',
+  'ollama', 'groq', 'openrouter', 'generic',
+] as const;
 const PROVIDER_SET = new Set<string>(PROVIDER_CHAIN);
 
 export interface LlmCallOptions {

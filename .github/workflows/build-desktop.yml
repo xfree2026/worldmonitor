@@ -486,7 +486,7 @@ jobs:
           SECONDS=$((ELAPSED % 60))
           echo "Build duration for ${{ matrix.label }}: ${MINUTES}m ${SECONDS}s"
 
-  # ── Update release notes with changelog after all builds complete ──
+  # ── 更新 release notes 为中文 changelog（所有桌面平台构建完成后） ──
   update-release-notes:
     needs: build-tauri
     if: always() && contains(needs.build-tauri.result, 'success')
@@ -498,29 +498,57 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate and update release notes
+      - name: 生成并更新中文 release notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           VERSION=$(jq -r .version src-tauri/tauri.conf.json)
-          TAG="v${VERSION}"
+          # 从推送的 tag 名直接判断变体（tag 形如 v2.8.0 或 v2.8.0-tech）
+          PUSHED_TAG="${GITHUB_REF_NAME:-}"
+          if [[ "$PUSHED_TAG" == *-tech ]]; then
+            TAG="v${VERSION}-tech"
+            TITLE="Tech Monitor v${VERSION}"
+          else
+            TAG="v${VERSION}"
+            TITLE="世界监控 v${VERSION}"
+          fi
           PREV_TAG=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || echo "")
 
           if [ -z "$PREV_TAG" ]; then
-            COMMITS="Initial release"
+            COMMITS="首次发布"
           else
-            COMMITS=$(git log "${PREV_TAG}..${TAG}" --oneline --no-merges | sed 's/^[a-f0-9]*//' | sed 's/^ /- /')
+            COMMITS=$(git log "${PREV_TAG}..${TAG}" --oneline --no-merges \
+              | sed 's/^[a-f0-9]*//' \
+              | sed 's/^ /- /')
           fi
 
           BODY=$(cat <<NOTES
-          ## What's Changed
+          ## 📦 ${TITLE}
+
+          ### 📝 更新内容
 
           ${COMMITS}
 
-          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG:-initial}...${TAG}
+          ### 📥 Windows 安装说明
+
+          - 下载下方 `.exe` (NSIS 安装包) 或 `.msi` 安装包
+          - 双击运行安装程序，按提示完成安装
+          - 首次启动后请在「设置 - AI 与摘要」中填入中国大模型 API Key（DeepSeek / 通义千问 / 智谱 GLM / Kimi / 百川）
+
+          ### ✨ 主要特性
+
+          - 🇨🇳 全中文界面与视角
+          - 📈 中国 A 股市场实时行情（含上证、深证、创业板、科创板）
+          - 💰 贵金属人民币计价（黄金、白银、铂金）
+          - 🤖 中国主流 AI 大模型摘要（DeepSeek、通义千问、智谱 GLM、Kimi、百川）
+          - 🌐 外文新闻自动翻译为中文
+          - 🖥️ 支持 Windows / macOS / Linux 桌面平台
+
+          **完整对比**: https://github.com/${{ github.repository }}/compare/${PREV_TAG:-initial}...${TAG}
           NOTES
           )
 
-          gh release edit "$TAG" --notes "$BODY"
-          echo "Updated release notes for $TAG"
+          gh release edit "$TAG" --notes "$BODY" || \
+            gh release create "$TAG" --notes "$BODY" --title "${TITLE}"
+          echo "已更新 release notes: $TAG"

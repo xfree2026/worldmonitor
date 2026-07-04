@@ -11,7 +11,41 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+// 桌面端：使用系统 keyring；Android 端：使用内存存根（持久化由 Tauri 处理）
+#[cfg(not(target_os = "android"))]
 use keyring::Entry;
+
+#[cfg(target_os = "android")]
+mod keyring_stub {
+    use std::fmt;
+    /// Android keyring 存根：所有方法均返回 Err，降级为纯内存存储。
+    pub struct Entry;
+    pub enum Error {
+        Unsupported,
+    }
+    impl fmt::Display for Error {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.write_str("Android 平台不支持 keyring 持久化")
+        }
+    }
+    impl Entry {
+        pub fn new(_service: &str, _key: &str) -> Result<Self, Error> {
+            Err(Error::Unsupported)
+        }
+        pub fn get_password(&self) -> Result<String, Error> {
+            Err(Error::Unsupported)
+        }
+        pub fn set_password(&self, _password: &str) -> Result<(), Error> {
+            Err(Error::Unsupported)
+        }
+        pub fn delete_credential(&self) -> Result<(), Error> {
+            Err(Error::Unsupported)
+        }
+    }
+}
+#[cfg(target_os = "android")]
+use keyring_stub::Entry;
+
 use reqwest::Url;
 use serde::Serialize;
 use serde_json::{Map, Value};
@@ -29,7 +63,14 @@ const MENU_HELP_DEVTOOLS_ID: &str = "help.devtools";
 const TRUSTED_WINDOWS: [&str; 3] = ["main", "settings", "live-channels"];
 const DESKTOP_SHARED_SECRET_KEY: &str = "WM_DESKTOP_SHARED_SECRET";
 const BUILD_TIME_SIDECAR_ENV_KEYS: [&str; 2] = ["CONVEX_URL", DESKTOP_SHARED_SECRET_KEY];
-const SUPPORTED_SECRET_KEYS: [&str; 29] = [
+const SUPPORTED_SECRET_KEYS: [&str; 34] = [
+    // 中国主流 AI 大模型 API Key（OpenAI 兼容接口）
+    "DEEPSEEK_API_KEY",
+    "QWEN_API_KEY",
+    "GLM_API_KEY",
+    "KIMI_API_KEY",
+    "BAICHUAN_API_KEY",
+    // 其他数据源与基础设施密钥
     "GROQ_API_KEY",
     "OPENROUTER_API_KEY",
     "TAVILY_API_KEYS",

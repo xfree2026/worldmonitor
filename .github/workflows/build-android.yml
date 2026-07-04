@@ -1,0 +1,235 @@
+name: 'Build Android APK'
+
+on:
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: '创建为草稿 release'
+        required: false
+        default: true
+        type: boolean
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
+jobs:
+  build-android:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    name: Build Android APK/AAB
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Start job timer
+        shell: bash
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7
+        with:
+          toolchain: stable
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@ad397744b0d591a723ab90405b7247fac0e6b8db
+        with:
+          workspaces: './src-tauri -> target'
+          cache-on-failure: true
+
+      - name: Setup Java 17
+        uses: actions/setup-java@dd7762d3836f3b95f9c6e9e2236c180f19f84f7e
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@8d5d3ba2b9d66d7b33f6963a92b4f4e014b58a05
+        with:
+          packages: |
+            platforms;android-34
+            build-tools;34.0.0
+            ndk;27.0.12077973
+
+      - name: Install Android NDK targets
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME}"
+          echo "ANDROID_NDK_HOME=${ANDROID_NDK_HOME}"
+          echo "ANDROID_NDK_ROOT=${ANDROID_NDK_ROOT}"
+          # 确保 NDK 路径正确
+          if [ -z "$ANDROID_NDK_HOME" ]; then
+            NDK_DIR=$(ls -d ${ANDROID_HOME}/ndk/*/ | head -1)
+            echo "ANDROID_NDK_HOME=${NDK_DIR}" >> "$GITHUB_ENV"
+            echo "ANDROID_NDK_ROOT=${NDK_DIR}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Check version consistency
+        run: npm run version:check
+
+      - name: Setup Tauri Android project
+        shell: bash
+        run: |
+          # 初始化 Tauri Android 项目（如果未初始化）
+          npx tauri android init --config src-tauri/tauri.android.conf.json || true
+
+      - name: Build Android APK + AAB
+        uses: tauri-apps/tauri-action@79c624843491f12ae9d63592534ed49df3bc4adb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_VARIANT: full
+          VITE_DESKTOP_RUNTIME: '1'
+          VITE_WS_API_URL: https://worldmonitor.app
+          CONVEX_URL: ${{ secrets.CONVEX_URL }}
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
+          NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
+        with:
+          tagName: v__VERSION__-android
+          releaseName: '世界监控 v__VERSION__ (Android)'
+          releaseBody: '请查看下方更新日志。'
+          releaseDraft: ${{ github.event_name == 'workflow_dispatch' && fromJSON(github.event.inputs.draft) }}
+          prerelease: false
+          args: android build --apk --aab --config src-tauri/tauri.android.conf.json
+          retryAttempts: 1
+
+      - name: Locate built APK and AAB
+        id: locate
+        shell: bash
+        run: |
+          # 在 src-tauri/gen/android 下查找产物
+          APK_FILE=$(find src-tauri/gen/android -name "*.apk" -type f | head -1)
+          AAB_FILE=$(find src-tauri/gen/android -name "*.aab" -type f | head -1)
+          if [ -z "$APK_FILE" ]; then
+            echo "::error::未找到 APK 产物"
+            exit 1
+          fi
+          echo "apk_path=${APK_FILE}" >> "$GITHUB_OUTPUT"
+          echo "aab_path=${AAB_FILE}" >> "$GITHUB_OUTPUT"
+          echo "apk_name=$(basename "$APK_FILE")" >> "$GITHUB_OUTPUT"
+          echo "aab_name=$(basename "$AAB_FILE")" >> "$GITHUB_OUTPUT"
+          ls -lh "$APK_FILE" "$AAB_FILE"
+
+      - name: Rename APK/AAB with version
+        shell: bash
+        run: |
+          VERSION=$(jq -r .version src-tauri/tauri.conf.json)
+          cp "${{ steps.locate.outputs.apk_path }}" "world-monitor-v${VERSION}-android.apk"
+          if [ -n "${{ steps.locate.outputs.aab_path }}" ]; then
+            cp "${{ steps.locate.outputs.aab_path }}" "world-monitor-v${VERSION}-android.aab"
+          fi
+          ls -lh world-monitor-v${VERSION}-android.*
+
+      - name: Upload APK to release
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf6f9
+        with:
+          tag_name: v__VERSION__-android
+          files: |
+            world-monitor-v*-android.apk
+            world-monitor-v*-android.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifact
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: android-build-${{ github.run_id }}
+          path: |
+            world-monitor-v*-android.apk
+            world-monitor-v*-android.aab
+          if-no-files-found: warn
+
+      - name: Report build duration
+        if: always()
+        shell: bash
+        run: |
+          if [ -z "${JOB_START_EPOCH:-}" ]; then
+            echo "::warning::JOB_START_EPOCH 缺失，无法计算耗时"
+            exit 0
+          fi
+          END_EPOCH=$(date +%s)
+          ELAPSED=$((END_EPOCH - JOB_START_EPOCH))
+          MINUTES=$((ELAPSED / 60))
+          SECONDS=$((ELAPSED % 60))
+          echo "Android 构建耗时: ${MINUTES}m ${SECONDS}s"
+
+  # ── 自动生成中文 release notes ──
+  update-release-notes:
+    needs: build-android
+    if: always() && contains(needs.build-android.result, 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: 生成并更新中文 release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          VERSION=$(jq -r .version src-tauri/tauri.conf.json)
+          TAG="v${VERSION}-android"
+          # 查找上一个 android release tag 作为对比基准
+          PREV_TAG=$(git tag --list 'v*-android' --sort=-version:refname | grep -v "^${TAG}$" | head -1 || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            COMMITS="首次发布"
+          else
+            COMMITS=$(git log "${PREV_TAG}..${TAG}" --oneline --no-merges \
+              | sed 's/^[a-f0-9]*//' \
+              | sed 's/^ /- /')
+          fi
+
+          BODY=$(cat <<NOTES
+          ## 📦 世界监控 Android v${VERSION}
+
+          ### 📝 更新内容
+
+          ${COMMITS}
+
+          ### 📥 安装说明
+
+          - 下载下方 \`world-monitor-v${VERSION}-android.apk\` 文件
+          - 在 Android 设备上开启「允许安装未知来源应用」
+          - 点击 APK 文件进行安装
+          - 首次启动后请在「设置 - AI 与摘要」中填入中国大模型 API Key
+
+          ### ✨ 主要特性
+
+          - 🇨🇳 全中文界面与视角
+          - 📈 中国 A 股市场实时行情（含上证、深证、创业板、科创板）
+          - 💰 贵金属人民币计价（黄金、白银、铂金）
+          - 🤖 中国主流 AI 大模型摘要（DeepSeek、通义千问、智谱 GLM、Kimi、百川）
+          - 🌐 外文新闻自动翻译为中文
+          - 📱 Android 原生体验
+
+          **完整对比**: https://github.com/${{ github.repository }}/compare/${PREV_TAG:-initial}...${TAG}
+          NOTES
+          )
+
+          gh release edit "$TAG" --notes "$BODY" || \
+            gh release create "$TAG" --notes "$BODY" --title "世界监控 v${VERSION} (Android)"
+          echo "已更新 release notes: $TAG"
