@@ -18,3 +18,8 @@ target/
 
 # Common local artifacts
 .DS_Store
+
+# 排除 api/ 目录：Vercel Hobby 计划限制 12 个 Serverless Function，
+# 本项目有 100+ 个 api 路由。前端通过 VITE_WS_API_URL 环境变量
+# 指向官方 API (https://api.worldmonitor.app)，无需本地函数。
+api/
