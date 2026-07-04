@@ -20,7 +20,6 @@
   "bundle": {
     "shortDescription": "世界监控 Android 应用",
     "longDescription": "世界监控 Android 应用，提供实时全球情报、中国股市、贵金属人民币计价及中国主流 AI 大模型摘要。",
-    "targets": ["apk", "aab"],
     "android": {
       "minSdkVersion": 24,
       "versionCode": 1
