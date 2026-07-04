@@ -49,8 +49,13 @@ use keyring_stub::Entry;
 use reqwest::Url;
 use serde::Serialize;
 use serde_json::{Map, Value};
+// 桌面端专用 API：菜单模块在 Android 上不可用
+#[cfg(desktop)]
 use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
-use tauri::{AppHandle, Manager, RunEvent, Webview, WebviewUrl, WebviewWindowBuilder, WindowEvent};
+use tauri::{AppHandle, Manager, RunEvent, Webview, WebviewUrl, WebviewWindowBuilder};
+// WindowEvent 仅用于桌面端窗口事件处理（Android 上 RunEvent::WindowEvent 不可用）
+#[cfg(desktop)]
+use tauri::WindowEvent;
 
 const DEFAULT_LOCAL_API_PORT: u16 = 46123;
 const KEYRING_SERVICE: &str = "world-monitor";
@@ -626,11 +631,15 @@ fn open_sidecar_log_file(app: AppHandle) -> Result<String, String> {
     open_sidecar_log_impl(&app).map(|path| path.display().to_string())
 }
 
+// 以下窗口管理 command 调用桌面端专用 API（.close()/.show()/.set_focus() 等），
+// 在 Android 上不可用，用 #[cfg(desktop)] 门控。
+#[cfg(desktop)]
 #[tauri::command]
 async fn open_settings_window_command(app: AppHandle) -> Result<(), String> {
     open_settings_window(&app)
 }
 
+#[cfg(desktop)]
 #[tauri::command]
 fn close_settings_window(app: AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("settings") {
@@ -641,6 +650,7 @@ fn close_settings_window(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(desktop)]
 #[tauri::command]
 async fn open_live_channels_window_command(
     webview: Webview,
@@ -664,6 +674,7 @@ async fn open_live_channels_window_command(
     open_live_channels_window(&app, base_url)
 }
 
+#[cfg(desktop)]
 #[tauri::command]
 fn close_live_channels_window(app: AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("live-channels") {
@@ -700,6 +711,7 @@ async fn fetch_polymarket(webview: Webview, state: tauri::State<'_, LocalApiStat
         .map_err(|e| format!("Read body failed: {e}"))
 }
 
+#[cfg(desktop)]
 fn open_settings_window(app: &AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("settings") {
         let _ = window.show();
@@ -729,6 +741,7 @@ fn open_settings_window(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(desktop)]
 fn open_live_channels_window(app: &AppHandle, base_url: Option<String>) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("live-channels") {
         let _ = window.show();
@@ -767,6 +780,7 @@ fn open_live_channels_window(app: &AppHandle, base_url: Option<String>) -> Resul
     Ok(())
 }
 
+#[cfg(desktop)]
 fn open_youtube_login_window(app: &AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("youtube-login") {
         let _ = window.show();
@@ -794,12 +808,14 @@ fn open_youtube_login_window(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(desktop)]
 #[tauri::command]
 async fn open_youtube_login(webview: Webview, app: AppHandle) -> Result<(), String> {
     require_trusted_window(webview.label())?;
     open_youtube_login_window(&app)
 }
 
+#[cfg(desktop)]
 fn build_app_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let settings_item = MenuItem::with_id(
         handle,
@@ -880,6 +896,7 @@ fn build_app_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     Menu::with_items(handle, &[&file_menu, &edit_menu, &help_menu])
 }
 
+#[cfg(desktop)]
 fn handle_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
     match event.id().as_ref() {
         MENU_FILE_SETTINGS_ID => {
@@ -1454,9 +1471,7 @@ pub fn run() {
         }
     }
 
-    tauri::Builder::default()
-        .menu(build_app_menu)
-        .on_menu_event(handle_menu_event)
+    let builder = tauri::Builder::default()
         .manage(LocalApiState::default())
         .manage(SecretsCache::load_from_keychain())
         .invoke_handler(tauri::generate_handler![
@@ -1474,11 +1489,18 @@ pub fn run() {
             delete_cache_entries_by_prefix,
             open_logs_folder,
             open_sidecar_log_file,
+            // 以下 command 仅桌面端可用（调用了 .close()/.show()/.set_focus() 等
+            // 或依赖桌面端窗口构建器方法），用 #[cfg(desktop)] 在 Android 上排除。
+            #[cfg(desktop)]
             open_settings_window_command,
+            #[cfg(desktop)]
             close_settings_window,
+            #[cfg(desktop)]
             open_live_channels_window_command,
+            #[cfg(desktop)]
             close_live_channels_window,
             open_url,
+            #[cfg(desktop)]
             open_youtube_login,
             fetch_polymarket
         ])
@@ -1497,7 +1519,13 @@ pub fn run() {
             }
 
             Ok(())
-        })
+        });
+
+    // 菜单 API（.menu()/.on_menu_event()）仅在桌面端可用
+    #[cfg(desktop)]
+    let builder = builder.menu(build_app_menu).on_menu_event(handle_menu_event);
+
+    builder
         .build(tauri::generate_context!())
         .expect("error while running world-monitor tauri application")
         .run(|app, event| {
