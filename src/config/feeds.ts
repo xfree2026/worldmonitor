@@ -6,9 +6,14 @@ import { mergeCanonicalFeeds } from './feed-resolution';
 const rss = rssProxyUrl;
 const railwayRss = rssProxyUrl;
 
-// Source tier system — canonical definition lives in server/_shared/source-tiers.ts
-// so server-side code can import it without pulling in client-only modules.
-export { SOURCE_TIERS, getSourceTier } from '../../server/_shared/source-tiers';
+// Source tier system — 权威数据 shared/source-tiers.json
+// 原本通过 server/_shared/source-tiers.ts 重导出，但 Vercel 部署会排除 server/，
+// 这里直接从 JSON 加载，保持 src/ 自包含。
+import sourceTiersData from '../../shared/source-tiers.json';
+export const SOURCE_TIERS: Record<string, number> = sourceTiersData as Record<string, number>;
+export function getSourceTier(sourceName: string): number {
+  return SOURCE_TIERS[sourceName] ?? 4;
+}
 
 
 export type SourceType = 'wire' | 'gov' | 'intel' | 'mainstream' | 'market' | 'tech' | 'other';
