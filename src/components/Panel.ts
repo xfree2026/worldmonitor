@@ -5,7 +5,6 @@ import { h, replaceChildren, safeHtml as sanitizeHtmlFragment, setTrustedHtml, t
 import { safeHtmlToString, type SafeHtml } from '@/utils/sanitize';
 import { trackPanelResized } from '@/services/analytics';
 import { getAiFlowSettings } from '@/services/ai-flow-settings';
-import { getSecretState } from '@/services/runtime-config';
 import { PanelGateReason } from '@/services/panel-gating';
 import { dataFreshness, type PanelFreshnessSummary } from '@/services/data-freshness';
 import { formatPanelFreshnessDisplay } from '@/services/panel-freshness-display';
@@ -224,10 +223,11 @@ export class Panel {
       headerLeft.appendChild(this.newBadgeEl);
     }
 
-    if (options.premium && !getSecretState('WORLDMONITOR_API_KEY').present) {
-      const proBadge = h('span', { className: 'panel-pro-badge' }, t('premium.pro'));
-      headerLeft.appendChild(proBadge);
-    }
+    // 全功能开放模式下不显示 PRO 徽标
+    // if (options.premium && !getSecretState('WORLDMONITOR_API_KEY').present) {
+    //   const proBadge = h('span', { className: 'panel-pro-badge' }, t('premium.pro'));
+    //   headerLeft.appendChild(proBadge);
+    // }
 
     this.header.appendChild(headerLeft);
 

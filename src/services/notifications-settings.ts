@@ -68,7 +68,8 @@ function appendNotificationError(rowEl: HTMLElement, message: string): void {
 }
 
 export function renderNotificationsSettings(host: NotificationsSettingsHost): NotificationsSettingsResult {
-  const isPro = !!host.isSignedIn && hasTier(1);
+  // 全功能开放：不再要求登录或会员
+  const isPro = true;
   const preselectCountry = normalizePreselectCountry(host.preselectCountry);
 
   let html = '';

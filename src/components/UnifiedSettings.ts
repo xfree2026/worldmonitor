@@ -570,12 +570,8 @@ export class UnifiedSettings {
   }
 
   private renderUpgradeSection(): string {
-    // Non-Dodo premium (API key / tester key / Clerk pro role without a
-    // Convex subscription): neither "Upgrade" nor "Manage Billing" is
-    // actionable. Checked FIRST so these users don't get stuck on the
-    // loading placeholder below — their Convex entitlement snapshot may
-    // never arrive at all.
-    if (!isEntitled() && hasPremiumAccess()) {
+    // 全功能开放：不显示升级/订阅区域
+    if (hasPremiumAccess()) {
       return '<div class="upgrade-pro-section upgrade-pro-hidden" hidden></div>';
     }
     // Signed-in user whose Convex entitlement snapshot has not arrived yet

@@ -186,9 +186,9 @@ export class LatestBriefPanel extends Panel {
     // Per-user endpoint needs a Clerk userId. Desktop API key +
     // browser tester keys satisfy hasPremiumAccess but don't bind
     // to a Clerk user, so there's nothing to fetch.
+    // 全功能开放：未登录时静默跳过，不显示登录提示
     const requestUserId = authState.user?.id ?? null;
     if (!requestUserId) {
-      this.renderSignInRequired();
       return;
     }
     // Client-side entitlement is NOT authoritative. /api/latest-brief

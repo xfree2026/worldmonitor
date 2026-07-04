@@ -145,17 +145,17 @@ export function getEntitlementState(): EntitlementState | null {
 /**
  * Check whether a specific feature flag is truthy in the current entitlement state.
  */
-export function hasFeature(flag: keyof EntitlementState['features']): boolean {
-  if (currentState === null) return false;
-  return Boolean(currentState.features[flag]);
+export function hasFeature(_flag: keyof EntitlementState['features']): boolean {
+  // 全功能开放：所有特性标志均视为已启用
+  return true;
 }
 
 /**
  * Check whether the user's tier meets or exceeds the given minimum.
  */
-export function hasTier(minTier: number): boolean {
-  if (currentState === null) return false;
-  return currentState.features.tier >= minTier;
+export function hasTier(_minTier: number): boolean {
+  // 全功能开放：tier 检查始终通过
+  return true;
 }
 
 /**
@@ -163,11 +163,8 @@ export function hasTier(minTier: number): boolean {
  * Returns true if entitlement data exists, plan is not free, and hasn't expired.
  */
 export function isEntitled(): boolean {
-  return (
-    currentState !== null &&
-    currentState.planKey !== 'free' &&
-    currentState.validUntil >= Date.now()
-  );
+  // 全功能开放：所有用户视为已订阅
+  return true;
 }
 
 /**

@@ -1,8 +1,6 @@
 import { loadFromStorage, saveToStorage } from '@/utils';
 import { clearPanelColSpanEntry, clearPanelSpanEntry } from '@/utils/panel-storage';
 import { sanitizeWidgetHtml } from '@/utils/widget-sanitizer';
-import { getAuthState } from '@/services/auth-state';
-import { isEntitled } from '@/services/entitlements';
 import {
   clearLegacyKeyStorage,
   migrateLegacyKeysToHttpOnlySession,
@@ -178,12 +176,8 @@ export function isProWidgetEnabled(): boolean {
 }
 
 export function isProUser(): boolean {
-  return (
-    isWidgetFeatureEnabled() ||
-    isProWidgetEnabled() ||
-    getAuthState().user?.role === 'pro' ||
-    isEntitled()
-  );
+  // 全功能开放：所有用户视为 Pro
+  return true;
 }
 
 export function getProWidgetKey(): string {

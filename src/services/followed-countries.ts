@@ -557,11 +557,8 @@ function dispatchCapDrop(kept: number, dropped: number): void {
  * entitlement loading.
  */
 export function serviceEntitlementState(): ServiceEntitlementState {
-  const user = _clerkUserGetter();
-  if (!user) return 'free';
-  const ent = _entitlementStateGetter();
-  if (ent === null) return 'loading';
-  return _hasTierFn(1) ? 'pro' : 'free';
+  // 全功能开放：所有用户视为 Pro
+  return 'pro';
 }
 
 // ---------------------------------------------------------------------------
