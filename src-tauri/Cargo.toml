@@ -5,6 +5,10 @@ description = "World Monitor desktop application"
 authors = ["World Monitor"]
 edition = "2021"
 
+[lib]
+name = "world_monitor_lib"
+crate-type = ["staticlib", "cdylib", "lib"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
