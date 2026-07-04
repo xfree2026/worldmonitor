@@ -28,26 +28,26 @@ jobs:
     timeout-minutes: 120
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@v4
 
       - name: Start job timer
         shell: bash
         run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
 
       - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
       - name: Rust cache
-        uses: swatinem/rust-cache@ad397744b0d591a723ab90405b7247fac0e6b8db
+        uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
           cache-on-failure: true
@@ -63,33 +63,40 @@ jobs:
         with:
           packages: 'platforms;android-34 build-tools;34.0.0 ndk;27.0.12077973'
 
-      - name: Install Android NDK targets
+      - name: 导出 Android NDK 环境变量
         shell: bash
         run: |
           echo "ANDROID_HOME=${ANDROID_HOME}"
-          echo "ANDROID_NDK_HOME=${ANDROID_NDK_HOME}"
-          echo "ANDROID_NDK_ROOT=${ANDROID_NDK_ROOT}"
-          # 确保 NDK 路径正确
-          if [ -z "$ANDROID_NDK_HOME" ]; then
-            NDK_DIR=$(ls -d ${ANDROID_HOME}/ndk/*/ | head -1)
+          # 自动定位 NDK 目录并导出
+          NDK_DIR=$(ls -d ${ANDROID_HOME}/ndk/*/ 2>/dev/null | head -1)
+          if [ -n "$NDK_DIR" ]; then
+            NDK_DIR="${NDK_DIR%/}"
             echo "ANDROID_NDK_HOME=${NDK_DIR}" >> "$GITHUB_ENV"
             echo "ANDROID_NDK_ROOT=${NDK_DIR}" >> "$GITHUB_ENV"
+            echo "NDK_HOME=${NDK_DIR}" >> "$GITHUB_ENV"
+            echo "NDK 路径: ${NDK_DIR}"
+          else
+            echo "::error::未找到 NDK 安装目录"
+            exit 1
           fi
 
-      - name: Install frontend dependencies
+      - name: 安装前端依赖
         run: npm ci
 
-      - name: Check version consistency
+      - name: 检查版本一致性
         run: npm run version:check
 
-      - name: Setup Tauri Android project
+      - name: 初始化 Tauri Android 项目
         shell: bash
+        env:
+          VITE_VARIANT: full
+          VITE_DESKTOP_RUNTIME: '1'
         run: |
-          # 初始化 Tauri Android 项目（如果未初始化）
-          npx tauri android init --config src-tauri/tauri.android.conf.json || true
+          # 初始化 Android 项目（已存在则跳过）
+          npx tauri android init --config src-tauri/tauri.android.conf.json || echo "Android 项目已存在或初始化跳过"
 
-      - name: Build Android APK + AAB
-        uses: tauri-apps/tauri-action@79c624843491f12ae9d63592534ed49df3bc4adb
+      - name: 构建 Android APK + AAB
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_VARIANT: full
@@ -100,55 +107,55 @@ jobs:
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
           ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
           NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
-        with:
-          tagName: v__VERSION__-android
-          releaseName: '世界监控 v__VERSION__ (Android)'
-          releaseBody: '请查看下方更新日志。'
-          releaseDraft: ${{ github.event_name == 'workflow_dispatch' && fromJSON(github.event.inputs.draft) }}
-          prerelease: false
-          args: android build --apk --aab --config src-tauri/tauri.android.conf.json
-          retryAttempts: 1
+        run: |
+          echo "=== 开始构建 Android APK + AAB ==="
+          npx tauri android build --apk --aab --config src-tauri/tauri.android.conf.json
 
-      - name: Locate built APK and AAB
+      - name: 定位构建产物
         id: locate
         shell: bash
         run: |
-          # 在 src-tauri/gen/android 下查找产物
-          APK_FILE=$(find src-tauri/gen/android -name "*.apk" -type f | head -1)
-          AAB_FILE=$(find src-tauri/gen/android -name "*.aab" -type f | head -1)
+          echo "=== 查找 APK / AAB 产物 ==="
+          APK_FILE=$(find src-tauri/gen/android -name "*.apk" -type f 2>/dev/null | head -1)
+          AAB_FILE=$(find src-tauri/gen/android -name "*.aab" -type f 2>/dev/null | head -1)
+          echo "APK: ${APK_FILE:-未找到}"
+          echo "AAB: ${AAB_FILE:-未找到}"
           if [ -z "$APK_FILE" ]; then
             echo "::error::未找到 APK 产物"
             exit 1
           fi
           echo "apk_path=${APK_FILE}" >> "$GITHUB_OUTPUT"
           echo "aab_path=${AAB_FILE}" >> "$GITHUB_OUTPUT"
-          echo "apk_name=$(basename "$APK_FILE")" >> "$GITHUB_OUTPUT"
-          echo "aab_name=$(basename "$AAB_FILE")" >> "$GITHUB_OUTPUT"
-          ls -lh "$APK_FILE" "$AAB_FILE"
 
-      - name: Rename APK/AAB with version
+      - name: 用版本号重命名产物
+        id: rename
         shell: bash
         run: |
           VERSION=$(jq -r .version src-tauri/tauri.conf.json)
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           cp "${{ steps.locate.outputs.apk_path }}" "world-monitor-v${VERSION}-android.apk"
           if [ -n "${{ steps.locate.outputs.aab_path }}" ]; then
             cp "${{ steps.locate.outputs.aab_path }}" "world-monitor-v${VERSION}-android.aab"
           fi
           ls -lh world-monitor-v${VERSION}-android.*
 
-      - name: Upload APK to release
+      - name: 创建 Release 并上传 APK/AAB
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v__VERSION__-android
+          tag_name: ${{ github.ref_name }}-android
+          name: '世界监控 ${{ github.ref_name }} (Android)'
+          body: '请查看下方更新日志。'
+          draft: ${{ github.event_name == 'workflow_dispatch' && fromJSON(github.event.inputs.draft) }}
+          prerelease: false
           files: |
             world-monitor-v*-android.apk
             world-monitor-v*-android.aab
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload build artifact
+      - name: 上传构建产物（artifact）
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@v4
         with:
           name: android-build-${{ github.run_id }}
           path: |
@@ -156,19 +163,17 @@ jobs:
             world-monitor-v*-android.aab
           if-no-files-found: warn
 
-      - name: Report build duration
+      - name: 报告构建耗时
         if: always()
         shell: bash
         run: |
           if [ -z "${JOB_START_EPOCH:-}" ]; then
-            echo "::warning::JOB_START_EPOCH 缺失，无法计算耗时"
+            echo "::warning::JOB_START_EPOCH 缺失"
             exit 0
           fi
           END_EPOCH=$(date +%s)
           ELAPSED=$((END_EPOCH - JOB_START_EPOCH))
-          MINUTES=$((ELAPSED / 60))
-          SECONDS=$((ELAPSED % 60))
-          echo "Android 构建耗时: ${MINUTES}m ${SECONDS}s"
+          echo "Android 构建耗时: $((ELAPSED / 60))m $((ELAPSED % 60))s"
 
   # ── 自动生成中文 release notes ──
   update-release-notes:
@@ -178,7 +183,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -189,7 +194,6 @@ jobs:
         run: |
           VERSION=$(jq -r .version src-tauri/tauri.conf.json)
           TAG="v${VERSION}-android"
-          # 查找上一个 android release tag 作为对比基准
           PREV_TAG=$(git tag --list 'v*-android' --sort=-version:refname | grep -v "^${TAG}$" | head -1 || echo "")
 
           if [ -z "$PREV_TAG" ]; then
