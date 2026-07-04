@@ -579,7 +579,7 @@ export class CryptoPanel extends Panel {
 
 export class CryptoHeatmapPanel extends Panel {
   constructor() {
-    super({ id: 'crypto-heatmap', title: 'Crypto Sectors' });
+    super({ id: 'crypto-heatmap', title: '加密板块' });
   }
 
   public renderSectors(data: Array<{ id: string; name: string; change: number }>): void {
@@ -638,18 +638,18 @@ export class TokenListPanel extends Panel {
 
 export class DefiTokensPanel extends TokenListPanel {
   constructor() {
-    super({ id: 'defi-tokens', title: 'DeFi Tokens', infoTooltip: t('components.defiTokens.infoTooltip') });
+    super({ id: 'defi-tokens', title: 'DeFi 代币', infoTooltip: t('components.defiTokens.infoTooltip') });
   }
 }
 
 export class AiTokensPanel extends TokenListPanel {
   constructor() {
-    super({ id: 'ai-tokens', title: 'AI Tokens', infoTooltip: t('components.aiTokens.infoTooltip') });
+    super({ id: 'ai-tokens', title: 'AI 代币', infoTooltip: t('components.aiTokens.infoTooltip') });
   }
 }
 
 export class OtherTokensPanel extends TokenListPanel {
   constructor() {
-    super({ id: 'other-tokens', title: 'Alt Tokens', infoTooltip: t('components.altTokens.infoTooltip') });
+    super({ id: 'other-tokens', title: '山寨币', infoTooltip: t('components.altTokens.infoTooltip') });
   }
 }

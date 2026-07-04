@@ -73,7 +73,7 @@ export class RegionalIntelligenceBoard extends Panel {
   constructor() {
     super({
       id: 'regional-intelligence',
-      title: 'Regional Intelligence',
+      title: '区域情报',
       infoTooltip:
         'Canonical regional intelligence brief: regime label, 7-axis balance vector, top actors, scenario lanes, transmission paths, and watchlist. One snapshot per region, refreshed every 6 hours.',
       premium: 'locked',

@@ -115,7 +115,7 @@ export class ChatAnalystPanel extends Panel {
   constructor() {
     super({
       id: 'chat-analyst',
-      title: 'WM Analyst',
+      title: 'WM 分析师',
       premium: 'locked',
       defaultRowSpan: 2,
       infoTooltip: t('components.chatAnalyst.infoTooltip'),

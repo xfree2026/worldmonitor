@@ -37,7 +37,7 @@ export class ThreatTimelinePanel extends Panel {
   constructor() {
     super({
       id: 'threat-timeline',
-      title: 'Threat Timeline',
+      title: '威胁时间线',
       showCount: false,
       infoTooltip: 'Seven-day threat-level distribution from intelligence insights.',
       defaultRowSpan: 2,

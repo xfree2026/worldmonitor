@@ -63,7 +63,7 @@ export class StockAnalysisPanel extends Panel {
   private lastHistory: StockAnalysisHistory = {};
 
   constructor() {
-    super({ id: 'stock-analysis', title: 'Premium Stock Analysis', infoTooltip: t('components.stockAnalysis.infoTooltip'), premium: 'locked' });
+    super({ id: 'stock-analysis', title: '高级股票分析', infoTooltip: t('components.stockAnalysis.infoTooltip'), premium: 'locked' });
     this.header.appendChild(createWatchlistButton('Edit Watchlist'));
   }
 

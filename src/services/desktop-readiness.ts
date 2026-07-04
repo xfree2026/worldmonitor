@@ -127,12 +127,12 @@ export function getDesktopReadinessChecks(localBackendEnabled: boolean): Desktop
   const liveTrackingReady = isFeatureAvailable('aisRelay') || isFeatureAvailable('openskyRelay');
 
   return [
-    { id: 'startup', label: 'Desktop startup + sidecar API health', ready: localBackendEnabled },
-    { id: 'map', label: 'Map rendering (local layers + static geo assets)', ready: true },
-    { id: 'core-intel', label: 'Core intelligence panels (Live News, Monitor, Strategic Risk)', ready: true },
-    { id: 'summaries', label: 'Summaries (provider-backed or browser fallback)', ready: isFeatureAvailable('aiOllama') || isFeatureAvailable('aiGroq') || isFeatureAvailable('aiOpenRouter') },
-    { id: 'market', label: 'Market panel live data paths', ready: true },
-    { id: 'live-tracking', label: 'At least one live-tracking mode (AIS or OpenSky)', ready: liveTrackingReady },
+    { id: 'startup', label: '桌面启动 + sidecar API 健康', ready: localBackendEnabled },
+    { id: 'map', label: '地图渲染（本地图层 + 静态地理资源）', ready: true },
+    { id: 'core-intel', label: '核心情报面板（实时新闻、监控、战略风险）', ready: true },
+    { id: 'summaries', label: '摘要（提供商支持或浏览器回退）', ready: isFeatureAvailable('aiOllama') || isFeatureAvailable('aiGroq') || isFeatureAvailable('aiOpenRouter') },
+    { id: 'market', label: '市场面板实时数据路径', ready: true },
+    { id: 'live-tracking', label: '至少一种实时追踪模式（AIS 或 OpenSky）', ready: liveTrackingReady },
   ];
 }
 

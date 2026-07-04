@@ -186,7 +186,7 @@ export class PipelineStatusPanel extends Panel {
   constructor() {
     super({
       id: 'pipeline-status',
-      title: 'Oil & Gas Pipeline Status',
+      title: '油气管道状态',
       defaultRowSpan: 2,
       infoTooltip:
         'Curated registry of critical oil and gas pipelines. Public badge is derived from ' +

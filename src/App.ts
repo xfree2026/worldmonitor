@@ -953,7 +953,7 @@ export class App {
       openCountryStory: (code, name) => {
         void this.countryIntel.openCountryStory(code, name).catch((err) => {
           console.error('[CountryStory] Failed to open story:', err);
-          showToast('Country story failed to open. Please try again.');
+          showToast('国家故事打开失败，请重试。');
         });
       },
       openCountryBrief: (code) => {
@@ -961,7 +961,7 @@ export class App {
         void this.countryIntel.openCountryBriefByCode(code, name).catch((err) => {
           console.error('[CountryBrief] Failed to open country brief:', err);
           this.state.map?.setRenderPaused(false);
-          showToast('Country brief failed to open. Please try again.');
+          showToast('国家简报打开失败，请重试。');
         });
       },
       loadAllData: () => this.dataLoader.loadAllData(),
@@ -1040,7 +1040,7 @@ export class App {
             void this.countryIntel.openCountryBriefByCode(code, country).catch((err) => {
               console.error('[CountryBrief] Failed to open country brief:', err);
               this.state.map?.setRenderPaused(false);
-              showToast('Country brief failed to open. Please try again.');
+              showToast('国家简报打开失败，请重试。');
             });
           },
           enablePanel: (panelId) => this.eventHandlers.enablePanelById(panelId),
@@ -1108,7 +1108,7 @@ export class App {
     } catch (error) {
       if (!this.state.isDestroyed) {
         console.warn('[search] Failed to load search manager:', error);
-        if (!options.throwOnFailure) showToast('Search failed to load. Please try again.');
+        if (!options.throwOnFailure) showToast('搜索加载失败，请重试。');
       }
       if (options.throwOnFailure) throw error;
     } finally {
@@ -1923,7 +1923,7 @@ export class App {
           }).catch((err) => {
             console.error('[CountryBrief] Failed to open country brief:', err);
             this.state.map?.setRenderPaused(false);
-            showToast('Country brief failed to open. Please try again.');
+            showToast('国家简报打开失败，请重试。');
           });
           this.eventHandlers.syncUrlState();
         }, DEEP_LINK_INITIAL_DELAY_MS);
@@ -1945,7 +1945,7 @@ export class App {
         }).catch((err) => {
           console.error('[CountryBrief] Failed to open country brief:', err);
           this.state.map?.setRenderPaused(false);
-          showToast('Country brief failed to open. Please try again.');
+          showToast('国家简报打开失败，请重试。');
         });
         this.eventHandlers.syncUrlState();
       }, DEEP_LINK_INITIAL_DELAY_MS);

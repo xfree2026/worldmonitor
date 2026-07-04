@@ -177,7 +177,7 @@ export class StorageFacilityMapPanel extends Panel {
   constructor() {
     super({
       id: 'storage-facility-map',
-      title: 'Strategic Storage Atlas',
+      title: '战略储备图集',
       defaultRowSpan: 2,
       infoTooltip:
         'Curated registry of strategic storage assets — underground gas storage, strategic ' +

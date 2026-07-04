@@ -39,7 +39,7 @@ const FALLBACK_IMAGE_SVG = 'data:image/svg+xml,' + encodeURIComponent(
 
 export class SpeciesComebackPanel extends Panel {
   constructor() {
-    super({ id: 'species', title: 'Conservation Wins', trackActivity: false, infoTooltip: t('components.conservationWins.infoTooltip') });
+    super({ id: 'species', title: '保护胜利', trackActivity: false, infoTooltip: t('components.conservationWins.infoTooltip') });
   }
 
   /**

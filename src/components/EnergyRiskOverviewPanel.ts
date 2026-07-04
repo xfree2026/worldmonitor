@@ -82,7 +82,7 @@ export class EnergyRiskOverviewPanel extends Panel {
   constructor() {
     super({
       id: 'energy-risk-overview',
-      title: 'Global Energy Risk Overview',
+      title: '全球能源风险概览',
       defaultRowSpan: 1,
       infoTooltip:
         'Consolidated executive view: Strait of Hormuz vessel status, EU gas ' +

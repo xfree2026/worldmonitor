@@ -32,7 +32,7 @@ export class DeductionPanel extends Panel {
     constructor(getLatestNews?: () => NewsItem[]) {
         super({
             id: 'deduction',
-            title: 'Deduct Situation',
+            title: '推断局势',
             infoTooltip: 'Use AI intelligence to deduct the timeline and impact of a hypothetical or current event.',
         });
 

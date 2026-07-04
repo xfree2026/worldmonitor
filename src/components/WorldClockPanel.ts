@@ -144,7 +144,7 @@ export class WorldClockPanel extends Panel {
   private dragStartY = 0;
 
   constructor() {
-    super({ id: 'world-clock', title: 'World Clock', trackActivity: false, infoTooltip: t('components.worldClock.infoTooltip') });
+    super({ id: 'world-clock', title: '世界时钟', trackActivity: false, infoTooltip: t('components.worldClock.infoTooltip') });
     this.homeCityId = detectHomeCity();
     this.selectedCities = loadSelectedCities();
 

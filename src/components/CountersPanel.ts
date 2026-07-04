@@ -27,7 +27,7 @@ export class CountersPanel extends Panel {
   private readonly desktopUpdateIntervalMs = 250;
 
   constructor() {
-    super({ id: 'counters', title: 'Live Counters', trackActivity: false, infoTooltip: t('components.counters.infoTooltip') });
+    super({ id: 'counters', title: '实时计数器', trackActivity: false, infoTooltip: t('components.counters.infoTooltip') });
     this.createCounterGrid();
     if (this.desktopMode) {
       this.visibilityHandler = () => {

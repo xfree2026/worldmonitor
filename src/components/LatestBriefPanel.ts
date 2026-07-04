@@ -102,7 +102,7 @@ export class LatestBriefPanel extends Panel {
   constructor() {
     super({
       id: 'latest-brief',
-      title: 'Latest Brief',
+      title: '最新简报',
       infoTooltip:
         "Your personalised daily editorial magazine. One brief per day, assembled from the news-intelligence layer and delivered via email, Telegram, Slack, and here.",
       // premium: 'locked' marks this as PRO-gated. The base Panel

@@ -37,7 +37,7 @@ export class EnergyCrisisPanel extends Panel {
   constructor() {
     super({
       id: 'energy-crisis',
-      title: 'Energy Crisis Tracker',
+      title: '能源危机追踪器',
       showCount: true,
       trackActivity: true,
       defaultRowSpan: 2,

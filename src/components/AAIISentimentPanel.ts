@@ -125,7 +125,7 @@ export class AAIISentimentPanel extends Panel {
   constructor() {
     super({
       id: 'aaii-sentiment',
-      title: 'AAII Investor Sentiment',
+      title: 'AAII 投资者情绪',
       showCount: false,
       infoTooltip: 'Weekly AAII survey: individual investors report 6-month market outlook as bullish, neutral, or bearish. Spread below -20 is a historical contrarian buy signal.',
     });

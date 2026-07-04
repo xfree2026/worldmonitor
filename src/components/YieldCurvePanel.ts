@@ -235,7 +235,7 @@ export class YieldCurvePanel extends Panel {
   private _rateRows: RateRow[] = [];
 
   constructor() {
-    super({ id: 'yield-curve', title: 'Yield Curve & Rates', showCount: false, infoTooltip: t('components.yieldCurve.infoTooltip') });
+    super({ id: 'yield-curve', title: '收益率曲线与利率', showCount: false, infoTooltip: t('components.yieldCurve.infoTooltip') });
 
     this.content.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-tab]');

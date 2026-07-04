@@ -59,6 +59,7 @@ export interface LiveChannel {
   videoId?: string; // Dynamically fetched live video ID
   isLive?: boolean;
   hlsUrl?: string; // HLS manifest URL for native <video> playback (desktop)
+  embedUrl?: string; // Direct iframe embed URL (for streams without HLS/CORS support)
   useFallbackOnly?: boolean; // Skip auto-detection, always use fallback
   geoAvailability?: string[]; // ISO 3166-1 alpha-2 codes; undefined = available everywhere
 }
@@ -67,7 +68,7 @@ export interface LiveChannel {
 // Full variant: World news channels (24/7 live streams)
 // 中国频道排在最前（CCTV 新闻第一，CGTN LIVE 第二），体现中文视角
 const FULL_LIVE_CHANNELS: LiveChannel[] = [
-  { id: 'cctv13', name: 'CCTV 新闻', hlsUrl: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8', useFallbackOnly: true },
+  { id: 'cctv13', name: 'CCTV 新闻', embedUrl: 'https://m-live.cctvnews.cctv.com/live/landscape.html?liveRoomNumber=16265686808730585228', useFallbackOnly: true },
   { id: 'cgtn-live', name: 'CGTN LIVE', fallbackVideoId: 'BOy2xDU1LC8', useFallbackOnly: true },
   { id: 'bloomberg', name: 'Bloomberg', handle: '@markets', fallbackVideoId: 'iEpJwprxDdk' },
   { id: 'sky', name: 'SkyNews', handle: '@SkyNews', fallbackVideoId: 'uvviIF4725I' },
@@ -92,7 +93,7 @@ const TECH_LIVE_CHANNELS: LiveChannel[] = [
 // Includes default channels so they appear in the grid for toggle on/off
 export const OPTIONAL_LIVE_CHANNELS: LiveChannel[] = [
   // 中国（默认频道排在最前）
-  { id: 'cctv13', name: 'CCTV 新闻', hlsUrl: 'https://live-play.cctvnews.cctv.com/cctv/merge_cctv13.m3u8', useFallbackOnly: true },
+  { id: 'cctv13', name: 'CCTV 新闻', embedUrl: 'https://m-live.cctvnews.cctv.com/live/landscape.html?liveRoomNumber=16265686808730585228', useFallbackOnly: true },
   { id: 'cgtn-live', name: 'CGTN LIVE', fallbackVideoId: 'BOy2xDU1LC8', useFallbackOnly: true },
   { id: 'cgtn', name: 'CGTN', hlsUrl: 'https://news.cgtn.com/resource/live/english/cgtn-news.m3u8', useFallbackOnly: true },
   { id: 'cgtn-espanol', name: 'CGTN Español', hlsUrl: 'https://news.cgtn.com/resource/live/espanol/cgtn-e.m3u8', useFallbackOnly: true },
@@ -1086,6 +1087,11 @@ export class LiveNewsPanel extends Panel {
   private async resolveChannelVideo(channel: LiveChannel, forceFallback = false): Promise<void> {
     const useFallbackVideo = channel.useFallbackOnly || forceFallback;
 
+    if (channel.embedUrl) {
+      channel.isLive = true;
+      return;
+    }
+
     if (this.getDirectHlsUrl(channel.id) || this.getProxiedHlsUrl(channel.id) || channel.hlsUrl) {
       channel.videoId = channel.fallbackVideoId;
       channel.isLive = true;
@@ -1310,6 +1316,26 @@ export class LiveNewsPanel extends Panel {
     this.startBotCheckTimeout();
   }
 
+  private renderEmbedIframe(embedUrl: string): void {
+    this.destroyPlayer();
+    this.ensurePlayerContainer();
+    if (!this.playerContainer) return;
+    setTrustedHtml(this.playerContainer, trustedHtml('', "legacy direct innerHTML migration"));
+
+    const iframe = document.createElement('iframe');
+    iframe.src = embedUrl;
+    iframe.className = 'live-news-embed-iframe';
+    iframe.style.cssText = 'width:100%;height:100%;border:0;object-fit:contain;background:#000';
+    iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('referrerpolicy', 'no-referrer');
+    iframe.setAttribute('loading', 'eager');
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms allow-presentation');
+
+    this.isPlayerReady = true;
+    this.playerContainer.appendChild(iframe);
+  }
+
   private async renderNativeHlsPlayer(): Promise<void> {
     const hlsUrl = this.getDirectHlsUrl(this.activeChannel.id) || this.getProxiedHlsUrl(this.activeChannel.id) || this.activeChannel.hlsUrl;
     if (!hlsUrl || !(hlsUrl.startsWith('https://') || hlsUrl.startsWith('http://127.0.0.1'))) return;
@@ -1488,6 +1514,11 @@ export class LiveNewsPanel extends Panel {
 
     if (this.getDirectHlsUrl(this.activeChannel.id) || this.getProxiedHlsUrl(this.activeChannel.id) || this.activeChannel.hlsUrl) {
       void this.renderNativeHlsPlayer();
+      return;
+    }
+
+    if (this.activeChannel.embedUrl) {
+      this.renderEmbedIframe(this.activeChannel.embedUrl);
       return;
     }
 

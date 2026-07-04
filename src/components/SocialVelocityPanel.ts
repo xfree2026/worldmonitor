@@ -30,7 +30,7 @@ export class SocialVelocityPanel extends Panel {
   private _hasData = false;
 
   constructor() {
-    super({ id: 'social-velocity', title: 'Social Velocity', showCount: false, infoTooltip: t('components.socialVelocity.infoTooltip') });
+    super({ id: 'social-velocity', title: '社交速度', showCount: false, infoTooltip: t('components.socialVelocity.infoTooltip') });
   }
 
   public async fetchData(): Promise<boolean> {

@@ -126,7 +126,7 @@ export class NationalDebtPanel extends Panel {
   constructor() {
     super({
       id: 'national-debt',
-      title: 'National Debt Clock',
+      title: '国债时钟',
       showCount: true,
       infoTooltip: 'Live national debt estimates for 150+ countries. Data anchored at 2024-01-01 and accruing using IMF deficit projections.',
     });

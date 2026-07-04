@@ -145,7 +145,7 @@ export class CountryIntelManager implements AppModule {
   private handleCountryBriefOpenError(err: unknown): void {
     console.error('[CountryBrief] Failed to open country brief:', err);
     this.ctx.map?.setRenderPaused(false);
-    this.showToast('Country brief failed to open. Please try again.');
+    this.showToast('国家简报打开失败，请重试。');
   }
 
   private async setupCountryIntel(): Promise<void> {
@@ -206,7 +206,7 @@ export class CountryIntelManager implements AppModule {
       this.ctx.countryBriefPage?.hide();
       void this.openCountryStory(code, name).catch((err) => {
         console.error('[CountryStory] Failed to open story:', err);
-        this.showToast('Country story failed to open. Please try again.');
+        this.showToast('国家故事打开失败，请重试。');
       });
     });
     this.ctx.countryBriefPage.setExportImageHandler(async (code, name) => {
@@ -735,7 +735,7 @@ export class CountryIntelManager implements AppModule {
         const activeCode = activePage?.getCode();
         if (showedLoading && activePage?.isVisible() && (activeCode === '__loading__' || activeCode === '__error__')) activePage.hide();
         if (!this.hasVisibleRealCountryBrief()) this.ctx.map?.setRenderPaused(false);
-        this.showToast('Country brief failed to open. Please try again.');
+        this.showToast('国家简报打开失败，请重试。');
       }
     } finally {
       if (!pageShown && token === this.briefRequestToken && !this.hasVisibleRealCountryBrief()) {

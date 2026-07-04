@@ -125,7 +125,7 @@ export class MacroTilesPanel extends Panel {
   private _estrObs: { date: string; value: number }[] = [];
 
   constructor() {
-    super({ id: 'macro-tiles', title: 'Macro Indicators', showCount: false, infoTooltip: t('components.macroTiles.infoTooltip') });
+    super({ id: 'macro-tiles', title: '宏观指标', showCount: false, infoTooltip: t('components.macroTiles.infoTooltip') });
 
     this.content.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-tab]');

@@ -76,7 +76,7 @@ export class EnergyDisruptionsPanel extends Panel {
   constructor() {
     super({
       id: 'energy-disruptions',
-      title: 'Energy Disruptions Log',
+      title: '能源中断日志',
       defaultRowSpan: 2,
       infoTooltip:
         'Curated log of disruption events affecting oil & gas pipelines and ' +

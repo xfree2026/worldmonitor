@@ -21,7 +21,7 @@ export class PositiveNewsFeedPanel extends Panel {
   private filterClickHandlers: Map<HTMLButtonElement, () => void> = new Map();
 
   constructor() {
-    super({ id: 'positive-feed', title: 'Good News Feed', showCount: true, trackActivity: true });
+    super({ id: 'positive-feed', title: '好消息信息流', showCount: true, trackActivity: true });
     this.createFilterBar();
   }
 
